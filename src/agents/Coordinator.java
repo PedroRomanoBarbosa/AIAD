@@ -11,4 +11,5 @@ public class Coordinator extends Agent{
 	
 	private Model chosenModel;
 	private List<Task> tasks;
+	
 }
