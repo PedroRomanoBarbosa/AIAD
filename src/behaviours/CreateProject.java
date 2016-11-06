@@ -1,4 +1,4 @@
-package behaviour;
+package behaviours;
 
 import jade.core.behaviours.Behaviour;
 
