@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
+import behaviours.CreateProject;
 import jade.core.Agent;
 import data.Task;
 import models.Model;
@@ -23,6 +24,7 @@ public class Coordinator extends Agent{
 	public Coordinator(){
 		this.collaborators = new ArrayList<Collaborator>();
 		this.tasks = new PriorityQueue<Task>(); // se calhar outra queue....
+		addBehaviour(new CreateProject());
 	}
 	
 	public void setModel(Model model){
