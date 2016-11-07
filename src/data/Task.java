@@ -8,4 +8,10 @@ public class Task {
 	private String taskType;
 	private List<String> skillsToPerform; //Skills to perform this task
 	private List<Integer> dependencies; //list of taskId
+	private boolean isDone;
+	private int duration = 0;
+	
+	public boolean isDone(){
+		return this.isDone;
+	}
 }
