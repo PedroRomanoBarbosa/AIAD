@@ -3,6 +3,7 @@ package agents;
 import java.util.List;
 import java.util.Queue;
 
+import behaviours.CreateProject;
 import jade.core.Agent;
 import data.Task;
 import models.Model;
@@ -15,4 +16,9 @@ public class Coordinator extends Agent{
 	private Queue<Task> tasks; //A task Queue ordered by crescent number of precedences
 	private boolean endProject;
 	private double projectDuration; //The duration of the project when ended
+	
+	public Coordinator(){
+		addBehaviour(new CreateProject());
+	}
+	
 }

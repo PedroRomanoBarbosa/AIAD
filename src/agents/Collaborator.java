@@ -12,4 +12,5 @@ public class Collaborator extends Agent{
 	private Coordinator projectCoordinator; //The project coordinator
 	private HashMap<String,Integer> skills; //skillId -> value(probabilistic)
 	private String currentTask; //The current task this collaborator is doing
+	
 }
