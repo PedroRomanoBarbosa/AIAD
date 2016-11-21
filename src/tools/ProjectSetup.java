@@ -97,7 +97,7 @@ public class ProjectSetup {
 	}
 	
 	public static void initCollaborators(){
-		ArrayList<String> collaborators = parser.getCollaborators();
+		ArrayList<String> collaborators = parser.getProjectCollaborators();
 		for (int i = 0; i < collaborators.size(); i++) {
 		}
 	}
