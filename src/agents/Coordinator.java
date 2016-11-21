@@ -4,7 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -22,6 +22,7 @@ import jade.core.behaviours.OneShotBehaviour;
 
 import data.Task;
 import models.Model;
+import parser.Parser;
 
 public class Coordinator extends Agent{
 	private static final long serialVersionUID = 1L;
@@ -33,6 +34,8 @@ public class Coordinator extends Agent{
 	private List<Task> tasksCompleted; // List of Tasks already done
 	private boolean projectFinished; // Boolean flag indicating the project is over
 	private double projectDuration; // The duration of the project when ended
+	
+	private File ficheiro;
 	
 	// Coordinator Behaviours
 	private OneShotBehaviour createProjectBehaviour;
@@ -80,12 +83,29 @@ public class Coordinator extends Agent{
 					}
 				});
 				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setCurrentDirectory(new File("."));
 				fileChooser.setDialogTitle("Select project file");
 				fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-				fileChooser.setFileFilter(new FileNameExtensionFilter(".proj files",".proj", ".PROJ"));
+				fileChooser.setFileFilter(new FileNameExtensionFilter(".xml files","xml"));
 				fileChooser.setSize(300, 300);
 				fileChooser.setVisible(true);
 				fileChooser.setAcceptAllFileFilterUsed(false);
+				
+				
+				
+				fileChooser.addActionListener(new ActionListener() {
+					
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						String command = e.getActionCommand();
+						if (command.equals(JFileChooser.APPROVE_SELECTION)) {
+							ficheiro = fileChooser.getSelectedFile();
+							System.out.println("FILE: "+ficheiro);
+							Parser parser = new Parser();
+							parser.execute(ficheiro);
+						} 
+					}
+				});
 				
 				JPanel mainPanel = new JPanel();
 				
