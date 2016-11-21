@@ -51,6 +51,10 @@ public class Coordinator extends Agent{
 		addBehaviour(createProjectBehaviour);
 	}
 	
+	public ArrayList<AID> getCollaboratorsAIDs(){
+		return (ArrayList<AID>) this.collaborators;
+	}
+	
 	public void setModel(Model model){
 		this.chosenModel = model;
 	}
