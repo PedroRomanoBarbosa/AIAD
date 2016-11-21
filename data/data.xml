@@ -12,8 +12,10 @@
     </intervenients>
   </project>
 
-  <coordinator id='coord01' />
-  <coordinator id='coord02' />
+  <coordinators>
+    <coordinator id='coord01' />
+    <coordinator id='coord02' />
+  </coordinators>
 
   <collaborators>
     <collaborator id='col01'>
