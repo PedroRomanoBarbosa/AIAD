@@ -26,5 +26,9 @@ public class Interaction {
 			
 	}
 	
+	public int getRatingValue(){
+		return this.rating_value;
+	}
+	
 	
 }

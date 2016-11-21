@@ -3,6 +3,7 @@ package models;
 import jade.core.AID;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Queue;
 
@@ -17,13 +18,13 @@ public class FireModel extends Model {
 	AID coordinatorAID;
 	AID collaboratorAID;
 	private double recency_factor = 0;
-	private double rating_weight = 0;
+	private HashMap<Interaction, Double> ratings_database; // double --> rating_weight
 	
-	private List<Interaction> ratings_database;
+	//private List<Interaction> ratings_database;
 	private double startTime = 0;
 	
 	public FireModel(AID coordinatorAID, AID collaboratorAID, int d){
-		this.ratings_database = new ArrayList<Interaction>();
+		this.ratings_database = new HashMap<Interaction,Double>();
 		this.recency_factor = (- d) / (Math.log(0.5)/Math.log(Math.E));
 		this.coordinatorAID = coordinatorAID;
 		this.collaboratorAID = collaboratorAID;
@@ -38,6 +39,6 @@ public class FireModel extends Model {
 		long endTime = (long) (System.nanoTime() - this.startTime);
 		double rating_weight = Math.exp(endTime/getRecencyFactor());
 		Interaction interaction = new Interaction(this.coordinatorAID, this.collaboratorAID, this.interaction_id);
-		this.ratings_database.add(interaction);
+		this.ratings_database.put(interaction, rating_weight);
 	}	
 }
