@@ -10,12 +10,14 @@
         <collaborator id='col03' />
       </collaborators>
     </intervenients>
+    <tasks>
+      <task id="t01"/>
+      <task id="t03"/>
+      <task id="t05"/>
+      <task id="t07"/>
+      <task id="t09"/>
+    </tasks>
   </project>
-
-  <coordinators>
-    <coordinator id='coord01' />
-    <coordinator id='coord02' />
-  </coordinators>
 
   <collaborators>
     <collaborator id='col01'>
@@ -67,18 +69,18 @@
 
   <tasks>
     <task id='t01'>
-      <skills>
+
         <skill name='s01' />
         <skill name='s07' />
         <skill name='s11' />
         <skill name='s13' />
         <skill name='s17' />
         <skill name='s19' />
-      </skills>
+
     </task>
 
     <task id='t02'>
-      <skills>
+
         <skill name='s02' />
         <skill name='s04' />
         <skill name='s06' />
@@ -89,81 +91,60 @@
         <skill name='s16' />
         <skill name='s18' />
         <skill name='s20' />
-      </skills>
+
     </task>
 
     <task id='t03'>
-      <skills>
+
         <skill name='s03' />
         <skill name='s06' />
         <skill name='s09' />
         <skill name='s12' />
         <skill name='s15' />
         <skill name='s18' />
-      </skills>
+
     </task>
 
     <task id='t04'>
-      <skills>
+
         <skill name='s04' />
         <skill name='s08' />
         <skill name='s12' />
         <skill name='s16' />
         <skill name='s20' />
-      </skills>
+
     </task>
 
     <task id='t06'>
-      <skills>
+
         <skill name='s06' />
         <skill name='s12' />
         <skill name='s18' />
-      </skills>
+
     </task>
 
     <task id='t07'>
-      <skills>
+
         <skill name='s07' />
         <skill name='s14' />
-      </skills>
+
     </task>
 
     <task id='t09'>
-      <skills>
+
         <skill name='s09' />
         <skill name='s18' />
-      </skills>
+
     </task>
 
     <task id='t10'>
-      <skills>
+
         <skill name='s10' />
         <skill name='s20' />
-      </skills>
+
     </task>
   </tasks>
 
 
-  <skills>
-    <skill name='s01' />
-    <skill name='s02' />
-    <skill name='s03' />
-    <skill name='s04' />
-    <skill name='s05' />
-    <skill name='s06' />
-    <skill name='s07' />
-    <skill name='s08' />
-    <skill name='s09' />
-    <skill name='s10' />
-    <skill name='s11' />
-    <skill name='s12' />
-    <skill name='s13' />
-    <skill name='s14' />
-    <skill name='s15' />
-    <skill name='s16' />
-    <skill name='s17' />
-    <skill name='s18' />
-    <skill name='s19' />
-    <skill name='s20' />
-  </skills>
+
 </scenario>

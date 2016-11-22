@@ -15,8 +15,10 @@ public class Parser {
 	private ArrayList<String> project_collaborators = new ArrayList<String>();
 	//private ArrayList<String> collaborators = new ArrayList<String>();
 	private String project_coordinator;
-	
+	private ArrayList<String> project_tasks;
 	private HashMap<String,HashMap<String,Float>> collaborators = new HashMap<String,HashMap<String,Float>>();
+	private HashMap<String, ArrayList<String>> taskSkills = new HashMap<String, ArrayList<String>>();
+	
 	
 	public void setModelName(String name){
 		this.modelName = name;
@@ -42,12 +44,28 @@ public class Parser {
 		return this.project_collaborators;
 	}
 	
+	public void setProjectTasks(ArrayList<String> tasks){
+		this.project_tasks = tasks;
+	}
+	
+	public ArrayList<String> getProjectTasks(){
+		return this.project_tasks;
+	}
+	
 	public void addCollaborators(String collaborator, HashMap<String, Float> skills){
 		this.collaborators.put(collaborator, skills);
 	}
 	
 	public HashMap<String,HashMap<String,Float>> getCollaborators() {
 		return this.collaborators;
+	}
+	
+	public void addTaskSkills(String task, ArrayList<String> skills) {
+		this.taskSkills.put(task, skills);
+	}
+	
+	public HashMap<String, ArrayList<String>> getTaskSkills(){
+		return taskSkills;
 	}
 	
 
@@ -63,7 +81,7 @@ public class Parser {
 			
 			
 			Node root = doc.getDocumentElement();
-			System.out.println("Root element :" + root.getNodeName());
+			System.out.println("INIT PARSER:" + root.getNodeName());
 			
 			NodeList rootChild = root.getChildNodes();
 			for (int i = 0; i < rootChild.getLength(); i++) {
@@ -77,16 +95,15 @@ public class Parser {
 					}else if (node.getNodeName() == "coordinators") { // nao e necessario
 						
 					}else if (node.getNodeName() == "collaborators") {
-						parseCollaborators(node);
-					}else if (node.getNodeName() == "task") {
-						
+						parseCollaborators(node);	
 					}else if (node.getNodeName() == "tasks") {
-						
+						parseTasks(node);
 					}else if (node.getNodeName() == "skills") {
 						
 					}
 				}
 			}
+			System.out.println("END PARSER");
 		} catch (Exception e){
 			// TODO catch
 		}
@@ -97,6 +114,7 @@ public class Parser {
 	public void parseProject(Node project){
 		Node node, nnode, nnnode;
 		NodeList projectChild, nodeChild, nnodeChild;
+		ArrayList<String> tasks = new ArrayList<String>();
 		
 		// MODEL
 		setModelName(project.getAttributes().getNamedItem("model").getNodeValue());
@@ -129,11 +147,20 @@ public class Parser {
 								}
 							}
 							System.out.println("\t\t\t"+nnode.getNodeName()+": "+getProjectCollaborators());
+						}else if (nnode.getNodeName() == "task") {
+							
+							// ADD TASKS
+							tasks.add(nnode.getAttributes().getNamedItem("id").getNodeValue());
+							//System.out.println(nnode.getAttributes().getNamedItem("id").getNodeValue());
+							
 						}
 					}
 				}
+				setProjectTasks(tasks);
+				
 			}
 		}
+		System.out.println("\t\t\t"+getProjectTasks());
 	}
 	
 	public void parseCollaborators(Node node){
@@ -164,6 +191,35 @@ public class Parser {
 		}
 		
 		System.out.println("\t\t"+getCollaborators());
+	}
+	
+	public void parseTasks(Node node){
+		Node nnode, nnnode;
+		NodeList nodeChild, nnodeChild;
+		String task;
+		ArrayList<String> skills = new ArrayList<String>();
+		
+		nodeChild = node.getChildNodes();
+		for (int i = 0; i < nodeChild.getLength(); i++) {
+			nnode = nodeChild.item(i);
+			if (nnode.getNodeType() == Node.ELEMENT_NODE) {
+				task = nnode.getAttributes().getNamedItem("id").getNodeValue();
+				//System.out.println("\t\t"+task);
+				
+				nnodeChild = nnode.getChildNodes();
+				skills = new ArrayList<String>();
+				for (int j = 0; j < nnodeChild.getLength(); j++) {
+					nnnode = nnodeChild.item(j);
+					if (nnnode.getNodeType() == Node.ELEMENT_NODE) {
+						skills.add(nnnode.getAttributes().getNamedItem("name").getNodeValue());
+					}
+				}
+				//System.out.println(skills);
+				addTaskSkills(task, skills);
+			}
+			
+		}
+		System.out.println("\t\t"+getTaskSkills());
 	}
 	
 	public static void errorMsg(String msg){
