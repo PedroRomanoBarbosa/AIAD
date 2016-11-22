@@ -56,8 +56,8 @@ public class ProjectSetup {
 				if (command.equals(JFileChooser.APPROVE_SELECTION)) {
 					ficheiro = fileChooser.getSelectedFile();
 					System.out.println("FILE: "+ficheiro);
-					parser.execute(ficheiro);
 					
+					parser.execute(ficheiro);
 					initAgents();
 					//initCoordinator();
 					//initCollaborators();
@@ -83,22 +83,32 @@ public class ProjectSetup {
 	}
 	
 	public static void initAgents() {
-		//Boot boot = new Boot();
-		String[] arguments = {"-gui", parser.getCoordinator()+":agents.Coordinator",};
+		String agents = "";
+		
+		agents += initCoordinator();
+		agents += ";";
+		agents += initCollaborators();
+		
+		
+		String[] arguments = {"-gui", agents};
 		Boot.main(arguments);
 	}
 	
-	public static void initCoordinator(){
-		//Boot boot = new Boot();
-		
-		//String[] arguments = {"-gui",parser.getCoordinator()+":agents.Coordinator"};
-		//boot.main(arguments);
-		
+	public static String initCoordinator(){
+		return parser.getCoordinator()+":agents.Coordinator";
 	}
 	
-	public static void initCollaborators(){
+	public static String initCollaborators(){
+		String tempColl = "";
+		
+		String sufix = ":agents.Collaborator;";
 		ArrayList<String> collaborators = parser.getProjectCollaborators();
+		
 		for (int i = 0; i < collaborators.size(); i++) {
+			tempColl += collaborators.get(i);
+			tempColl += sufix;
 		}
+		
+		return tempColl;
 	}
 }
