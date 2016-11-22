@@ -59,8 +59,6 @@ public class ProjectSetup {
 					
 					parser.execute(ficheiro);
 					initAgents();
-					//initCoordinator();
-					//initCollaborators();
 				} 
 			}
 		});

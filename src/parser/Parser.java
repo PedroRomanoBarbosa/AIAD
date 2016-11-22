@@ -92,8 +92,6 @@ public class Parser {
 					
 					if (node.getNodeName() == "project") {
 						parseProject(node);
-					}else if (node.getNodeName() == "coordinators") { // nao e necessario
-						
 					}else if (node.getNodeName() == "collaborators") {
 						parseCollaborators(node);	
 					}else if (node.getNodeName() == "tasks") {
@@ -105,7 +103,7 @@ public class Parser {
 			}
 			System.out.println("END PARSER");
 		} catch (Exception e){
-			// TODO catch
+			e.printStackTrace();
 		}
 		
 
@@ -151,11 +149,11 @@ public class Parser {
 							
 							// ADD TASKS
 							tasks.add(nnode.getAttributes().getNamedItem("id").getNodeValue());
-							//System.out.println(nnode.getAttributes().getNamedItem("id").getNodeValue());
 							
 						}
 					}
 				}
+				// TASKS
 				setProjectTasks(tasks);
 				
 			}
@@ -181,11 +179,9 @@ public class Parser {
 					nnnode = nnodeChild.item(j);
 					 
 					if (nnnode.getNodeType() == Node.ELEMENT_NODE) {
-						//System.out.println("\t\t\t"+nnnode.getAttributes().getNamedItem("skill").getNodeValue()+"   "+Float.parseFloat(nnnode.getAttributes().getNamedItem("prob").getNodeValue()));
 						skills.put(nnnode.getAttributes().getNamedItem("skill").getNodeValue(), Float.parseFloat(nnnode.getAttributes().getNamedItem("prob").getNodeValue()));
 					}
 				}
-				//System.out.println("\t\t"+collaborator+"  "+skills.toString());
 				addCollaborators(collaborator, skills);
 			}
 		}
@@ -204,7 +200,6 @@ public class Parser {
 			nnode = nodeChild.item(i);
 			if (nnode.getNodeType() == Node.ELEMENT_NODE) {
 				task = nnode.getAttributes().getNamedItem("id").getNodeValue();
-				//System.out.println("\t\t"+task);
 				
 				nnodeChild = nnode.getChildNodes();
 				skills = new ArrayList<String>();
@@ -214,7 +209,6 @@ public class Parser {
 						skills.add(nnnode.getAttributes().getNamedItem("name").getNodeValue());
 					}
 				}
-				//System.out.println(skills);
 				addTaskSkills(task, skills);
 			}
 			
