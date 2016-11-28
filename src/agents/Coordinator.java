@@ -35,13 +35,14 @@ public class Coordinator extends Agent{
 	private boolean projectFinished; // Boolean flag indicating the project is over
 	private double projectDuration; // The duration of the project when ended
 	
-	private File ficheiro;
+	
 	
 	// Coordinator Behaviours
 	private OneShotBehaviour createProjectBehaviour;
 	private OneShotBehaviour endProjectBehaviour;
 	
 	public Coordinator(){
+
 		collaborators = new ArrayList<AID>();
 		tasks = new PriorityQueue<Task>();
 		tasksCompleted = new ArrayList<Task>();
@@ -74,56 +75,8 @@ public class Coordinator extends Agent{
 		createProjectBehaviour = new OneShotBehaviour() {
 			@Override
 			public void action() {
-				JFrame frame = new JFrame("Project Manager Simulator");
-				frame.addWindowListener(new WindowAdapter() {
-					@Override
-					public void windowClosing(WindowEvent e) {
-						doDelete();
-						super.windowClosing(e);
-					}
-				});
-				JFileChooser fileChooser = new JFileChooser();
-				fileChooser.setCurrentDirectory(new File("."));
-				fileChooser.setDialogTitle("Select project file");
-				fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-				fileChooser.setFileFilter(new FileNameExtensionFilter(".xml files","xml"));
-				fileChooser.setSize(300, 300);
-				fileChooser.setVisible(true);
-				fileChooser.setAcceptAllFileFilterUsed(false);
 				
-				
-				
-				fileChooser.addActionListener(new ActionListener() {
-					
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						String command = e.getActionCommand();
-						if (command.equals(JFileChooser.APPROVE_SELECTION)) {
-							ficheiro = fileChooser.getSelectedFile();
-							System.out.println("FILE: "+ficheiro);
-							Parser parser = new Parser();
-							parser.execute(ficheiro);
-						} 
-					}
-				});
-				
-				JPanel mainPanel = new JPanel();
-				
-				JButton createProjectButton = new JButton("Create New Project");
-				createProjectButton.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						fileChooser.showDialog(frame, "Open");
-					}
-				});
-				
-				mainPanel.add(createProjectButton);
-				frame.add(mainPanel);
-				frame.pack();
-				frame.setLocationRelativeTo(null);
-				frame.setVisible(true);
 			}
 		};
 	}
-	
 }
