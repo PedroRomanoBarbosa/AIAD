@@ -19,19 +19,23 @@ public class Task implements Comparable<Task>{
 	 * Returns the number of precedences this task has.
 	 * @return number of precedences.
 	 */
-	public int getPrecedenceNumber(){
+	public int getPrecedenceNumber() {
 		return precedences.size();
 	}
 	
 	@Override
 	public int compareTo(Task task) {
-		if(getPrecedenceNumber() > task.getPrecedenceNumber()){
+		if(getPrecedenceNumber() > task.getPrecedenceNumber()) {
 			return 1;
-		}else if(getPrecedenceNumber() < task.getPrecedenceNumber()){
+		}else if(getPrecedenceNumber() < task.getPrecedenceNumber()) {
 			return -1;
 		}else{
 			return 0;
 		}
+	}
+	
+	public Integer getPrecedence(int index) {
+		return precedences.get(index);
 	}
 	
 }
