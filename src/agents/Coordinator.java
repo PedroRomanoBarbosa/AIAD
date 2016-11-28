@@ -18,6 +18,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 
 import data.Task;
@@ -31,7 +32,7 @@ public class Coordinator extends Agent{
 	private Model chosenModel; // The trust model chosen
 	private List<AID> collaborators; // All the collaborators AIDs
 	private Queue<Task> tasks; // A task Queue ordered by crescent number of precedences
-	private List<Task> tasksCompleted; // List of Tasks already done
+	private List<Integer> tasksCompleted; // List of Tasks Ids already done
 	private boolean projectFinished; // Boolean flag indicating the project is over
 	private double projectDuration; // The duration of the project when ended
 	
@@ -40,12 +41,13 @@ public class Coordinator extends Agent{
 	// Coordinator Behaviours
 	private OneShotBehaviour createProjectBehaviour;
 	private OneShotBehaviour endProjectBehaviour;
+	private CyclicBehaviour assignTaks;
 	
-	public Coordinator(){
+	public Coordinator() {
 
 		collaborators = new ArrayList<AID>();
 		tasks = new PriorityQueue<Task>();
-		tasksCompleted = new ArrayList<Task>();
+		tasksCompleted = new ArrayList<Integer>();
 		projectFinished = false;
 		
 		// Create Behaviours 
@@ -79,4 +81,53 @@ public class Coordinator extends Agent{
 			}
 		};
 	}
+	
+	/**
+	 * Creates the behaviour responsible for assigning tasks to the collaborators
+	 */
+	public void createAssignTaskBehaviour() {
+		assignTaks = new CyclicBehaviour() {
+			@Override
+			public void action() {
+				
+				// If the task queue still has tasks
+				if(!tasks.isEmpty()) {
+					boolean assign = true;
+					Task t = tasks.poll();
+					
+					// Check if task precedences are all done or not
+					for(int i = 0; i < t.getPrecedenceNumber(); i++) {
+						Integer id = t.getPrecedence(i);
+						
+						// If there is at least one precedence to be done do not assign this task
+						if(!tasksCompleted.contains(id)){
+							assign = false;
+							i = t.getPrecedenceNumber();
+							
+							// Push this task to the end of the tasks queue
+							tasks.add(t);
+						}
+					}
+					
+					// If there are no precedences to be done in this task try to assign it
+					if(assign) {
+						assignTask(t);
+					}
+				} else {
+					
+					// End project!
+					System.out.println("Project finished");
+				}
+			}
+		};
+	}
+	
+	public void assignTask(Task t) {
+		//TODO se estiverem todos ocupados esperar
+		
+		//TODO Verificar se o colaborador pode efetuar a tarefa
+		
+		//TODO Verificar qual o melhor(TRUST) para fazer a tarefa
+	}
+	
 }
