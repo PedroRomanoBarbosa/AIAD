@@ -44,7 +44,7 @@ public class Coordinator extends Agent{
 	public Coordinator(){
 
 		collaborators = new ArrayList<AID>();
-		tasks = new PriorityQueue<Task>(); // se calhar outra queue....
+		tasks = new PriorityQueue<Task>();
 		tasksCompleted = new ArrayList<Task>();
 		projectFinished = false;
 		
@@ -79,10 +79,4 @@ public class Coordinator extends Agent{
 			}
 		};
 	}
-	
-	
-	public void orderTasks(){
-		
-	}
-	
 }
