@@ -1,5 +1,6 @@
 package data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Task implements Comparable<Task>{
@@ -7,9 +8,16 @@ public class Task implements Comparable<Task>{
 	private int taskId;
 	private String taskType;
 	private List<String> skillsToPerform; //Skills to perform this task
-	private List<Integer> precedences; //list of taskId
+	private int[] precedences; //list of taskId
 	private boolean isDone;
 	private int duration = 0;
+	
+	public Task(int... dp) {
+		taskId = id;
+		id++;
+		skillsToPerform = new ArrayList<String>();
+		precedences = dp;
+	}
 	
 	public boolean isDone(){
 		return this.isDone;
@@ -20,7 +28,7 @@ public class Task implements Comparable<Task>{
 	 * @return number of precedences.
 	 */
 	public int getPrecedenceNumber() {
-		return precedences.size();
+		return precedences.length;
 	}
 	
 	@Override
@@ -35,7 +43,16 @@ public class Task implements Comparable<Task>{
 	}
 	
 	public Integer getPrecedence(int index) {
-		return precedences.get(index);
+		return precedences[index];
+	}
+	
+	public int getTaskId() {
+		return taskId;
+	}
+	
+	@Override
+	public String toString() {
+		return "Task: " + taskId;
 	}
 	
 }

@@ -1,29 +1,17 @@
 package agents;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.filechooser.FileNameExtensionFilter;
-
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
-
+import jade.core.behaviours.SimpleBehaviour;
 import data.Task;
 import models.Model;
-import parser.Parser;
 
 public class Coordinator extends Agent{
 	private static final long serialVersionUID = 1L;
@@ -32,16 +20,15 @@ public class Coordinator extends Agent{
 	private Model chosenModel; // The trust model chosen
 	private List<AID> collaborators; // All the collaborators AIDs
 	private Queue<Task> tasks; // A task Queue ordered by crescent number of precedences
+	private List<Task> tasksList;
 	private List<Integer> tasksCompleted; // List of Tasks Ids already done
 	private boolean projectFinished; // Boolean flag indicating the project is over
 	private double projectDuration; // The duration of the project when ended
 	
-	
-	
 	// Coordinator Behaviours
 	private OneShotBehaviour createProjectBehaviour;
 	private OneShotBehaviour endProjectBehaviour;
-	private CyclicBehaviour assignTaks;
+	private SimpleBehaviour assignTaks;
 	
 	public Coordinator() {
 
@@ -50,18 +37,24 @@ public class Coordinator extends Agent{
 		tasksCompleted = new ArrayList<Integer>();
 		projectFinished = false;
 		
-		// Create Behaviours 
+		//Tests
+		tasks.add(new Task(1));
+		tasks.add(new Task());
+		
+		// Create Behaviours
 		createProjectBehaviour();
+		createAssignTaskBehaviour();
 		
 		// Add Behaviours
 		addBehaviour(createProjectBehaviour);
+		addBehaviour(assignTaks);
 	}
-	
+
 	public void setModel(Model model){
 		this.chosenModel = model;
 	}
 	
-	public boolean isProjectFinish(){
+	public boolean isProjectFinished(){
 		return projectFinished;
 	}
 	
@@ -82,14 +75,17 @@ public class Coordinator extends Agent{
 		};
 	}
 	
-	/**
-	 * Creates the behaviour responsible for assigning tasks to the collaborators
-	 */
-	public void createAssignTaskBehaviour() {
-		assignTaks = new CyclicBehaviour() {
+	private void createAssignTaskBehaviour() {
+		assignTaks = new SimpleBehaviour() {
+
+			@Override
+			public boolean done() {
+				return projectFinished;
+			}
+			
 			@Override
 			public void action() {
-				
+				printState();
 				// If the task queue still has tasks
 				if(!tasks.isEmpty()) {
 					boolean assign = true;
@@ -112,11 +108,12 @@ public class Coordinator extends Agent{
 					// If there are no precedences to be done in this task try to assign it
 					if(assign) {
 						assignTask(t);
+						tasksCompleted.add(t.getTaskId());
 					}
 				} else {
-					
 					// End project!
 					System.out.println("Project finished");
+					projectFinished = true;
 				}
 			}
 		};
@@ -128,6 +125,14 @@ public class Coordinator extends Agent{
 		//TODO Verificar se o colaborador pode efetuar a tarefa
 		
 		//TODO Verificar qual o melhor(TRUST) para fazer a tarefa
+	}
+	
+	public void printState() {
+		System.out.println("### STATE ###");
+		List<Task> l = new ArrayList<Task>(tasks);
+		for (Task task : l) {
+			System.out.println(task);
+		}
 	}
 	
 }
