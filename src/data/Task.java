@@ -1,6 +1,7 @@
 package data;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Task implements Comparable<Task>{
@@ -52,7 +53,12 @@ public class Task implements Comparable<Task>{
 	
 	@Override
 	public String toString() {
-		return "Task: " + taskId;
+		String s = "Task: " + taskId + " (";
+		for (int i : precedences) {
+			s += " " + i;
+		}
+		s += " )";
+		return s;
 	}
 	
 }

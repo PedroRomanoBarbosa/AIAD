@@ -10,6 +10,14 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
+import jade.domain.AMSService;
+import jade.domain.FIPAException;
+import jade.domain.FIPANames;
+import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
+import jade.lang.acl.ACLMessage;
+import jade.proto.AchieveREInitiator;
+import jade.proto.FIPAProtocolNames;
 import data.Task;
 import models.Model;
 
@@ -29,16 +37,15 @@ public class Coordinator extends Agent{
 	private OneShotBehaviour createProjectBehaviour;
 	private OneShotBehaviour endProjectBehaviour;
 	private SimpleBehaviour assignTaks;
-	
-	public Coordinator() {
 
+	@Override
+	protected void setup() {
 		collaborators = new ArrayList<AID>();
 		tasks = new PriorityQueue<Task>();
 		tasksCompleted = new ArrayList<Integer>();
 		projectFinished = false;
 		
 		//Tests
-		tasks.add(new Task(1));
 		tasks.add(new Task());
 		
 		// Create Behaviours
@@ -47,7 +54,6 @@ public class Coordinator extends Agent{
 		
 		// Add Behaviours
 		addBehaviour(createProjectBehaviour);
-		addBehaviour(assignTaks);
 	}
 
 	public void setModel(Model model){
@@ -70,9 +76,27 @@ public class Coordinator extends Agent{
 		createProjectBehaviour = new OneShotBehaviour() {
 			@Override
 			public void action() {
-				
+				getAgents();
+				addBehaviour(assignTaks);
 			}
 		};
+	}
+	
+	private void getAgents() {
+		try {
+			SearchConstraints c = new SearchConstraints();
+	        c.setMaxResults(-1l);
+			AMSAgentDescription[] agents = AMSService.search(this, new AMSAgentDescription(), c);
+			System.out.println("All Collaborator agents:");
+			for (AMSAgentDescription amsAgentDescription : agents) {
+				if(amsAgentDescription.getName().getLocalName().equals("Lulu")){
+					System.out.println(amsAgentDescription.getName());
+					collaborators.add(amsAgentDescription.getName());
+				}
+			}
+		} catch (FIPAException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void createAssignTaskBehaviour() {
@@ -86,29 +110,29 @@ public class Coordinator extends Agent{
 			@Override
 			public void action() {
 				printState();
+				boolean assign = true;
+				
 				// If the task queue still has tasks
 				if(!tasks.isEmpty()) {
-					boolean assign = true;
-					Task t = tasks.poll();
+					Task task = tasks.poll();
 					
 					// Check if task precedences are all done or not
-					for(int i = 0; i < t.getPrecedenceNumber(); i++) {
-						Integer id = t.getPrecedence(i);
+					for(int i = 0; (i < task.getPrecedenceNumber()) && (assign == true); i++) {
+						int id = task.getPrecedence(i);
 						
-						// If there is at least one precedence to be done do not assign this task
+						// If there is at least one precedence to be done do not assign this task and end loop
 						if(!tasksCompleted.contains(id)){
 							assign = false;
-							i = t.getPrecedenceNumber();
 							
 							// Push this task to the end of the tasks queue
-							tasks.add(t);
+							tasks.add(task);
 						}
 					}
 					
 					// If there are no precedences to be done in this task try to assign it
 					if(assign) {
-						assignTask(t);
-						tasksCompleted.add(t.getTaskId());
+						assignTask(task);
+						//tasksCompleted.add(task.getTaskId());
 					}
 				} else {
 					// End project!
@@ -125,14 +149,52 @@ public class Coordinator extends Agent{
 		//TODO Verificar se o colaborador pode efetuar a tarefa
 		
 		//TODO Verificar qual o melhor(TRUST) para fazer a tarefa
+		
+		// Send FIPA complient request protocol message
+		AID collaborator = collaborators.get(0); //TODO change to best collaborator
+		ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
+		message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+		message.addReceiver(collaborator);
+		message.setContent("ASSIGN TASK " + t.getTaskId());
+		
+		//Initiate request //TODO Maybe this approach can cause problems...
+		addBehaviour(new AchieveREInitiator(this, message){
+
+			@Override
+			protected void handleInform(ACLMessage inform) {
+				System.out.println("Agent "+ inform.getSender().getName() + " successfully performed the requested action");
+			}
+			
+			@Override
+			protected void handleAgree(ACLMessage agree) {
+				System.out.println("Agent "+ agree.getSender().getName() + " agreed to perform the requested action");
+			}
+
+			@Override
+			protected void handleRefuse(ACLMessage refuse) {
+				System.out.println("Agent " + refuse.getSender().getName() + " refused to perform the requested action");
+			}
+
+			@Override
+			protected void handleFailure(ACLMessage failure) {
+				System.out.println("There was a failure!");
+			}
+			
+		});
 	}
 	
 	public void printState() {
-		System.out.println("### STATE ###");
+		System.out.println("#### STATE ####");
 		List<Task> l = new ArrayList<Task>(tasks);
+		System.out.println("Number of tasks: " + l.size());
 		for (Task task : l) {
 			System.out.println(task);
 		}
+		System.out.print("TASKS DONE: (");
+		for (int i : tasksCompleted) {
+			System.out.print(" " + i);
+		}
+		System.out.println(" )\n");
 	}
 	
 }
