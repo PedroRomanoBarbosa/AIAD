@@ -4,7 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -19,7 +18,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
-
+import data.CollaboratorData;
 import data.Task;
 import models.Model;
 
@@ -28,7 +27,7 @@ public class Coordinator extends Agent{
 	
 	// Project Meta Information
 	private Model chosenModel; // The trust model chosen
-	private List<AID> collaborators; // All the collaborators AIDs
+	private List<CollaboratorData> collaboratorsData; // All the collaborators AIDs
 	private Queue<Task> tasks; // A task Queue ordered by crescent number of precedences
 	private List<Task> tasksCompleted; // List of Tasks already done
 	private boolean projectFinished; // Boolean flag indicating the project is over
@@ -39,7 +38,7 @@ public class Coordinator extends Agent{
 	private OneShotBehaviour endProjectBehaviour;
 	
 	public Coordinator(){
-		collaborators = new ArrayList<AID>();
+		collaboratorsData = new ArrayList<CollaboratorData>();
 		tasks = new PriorityQueue<Task>(); // se calhar outra queue....
 		tasksCompleted = new ArrayList<Task>();
 		projectFinished = false;
@@ -51,8 +50,8 @@ public class Coordinator extends Agent{
 		addBehaviour(createProjectBehaviour);
 	}
 	
-	public ArrayList<AID> getCollaboratorsAIDs(){
-		return (ArrayList<AID>) this.collaborators;
+	public ArrayList<CollaboratorData> getCollaboratorsAIDs(){
+		return (ArrayList<CollaboratorData>) this.collaboratorsData;
 	}
 	
 	public void setModel(Model model){
@@ -63,9 +62,9 @@ public class Coordinator extends Agent{
 		return projectFinished;
 	}
 	
-	public void addCollaborator(AID collaboratorAID){
-		collaborators.add(collaboratorAID);
-	}
+	/*public void addCollaborator(AID collaboratorAID){
+		collaboratorsData.add(collaboratorAID);
+	}*/
 	
 	public void addTask(Task task){
 		tasks.add(task);
