@@ -27,6 +27,7 @@ public class Task implements Comparable<Task>{
 		skillsToPerform = new ArrayList<String>();
 		this.isDone = false;
 		this.taskId = taskId;
+		precedences = new ArrayList<String>();
 	}
 	
 	public boolean isDone(){
