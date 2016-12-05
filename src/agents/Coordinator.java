@@ -5,9 +5,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Map.Entry;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -27,21 +29,23 @@ public class Coordinator extends Agent{
 	
 	// Project Meta Information
 	private Model chosenModel; // The trust model chosen
-	private List<CollaboratorData> collaboratorsData; // All the collaborators AIDs
+	private static HashMap<CollaboratorData,AID> collaboratorsData; //skillId -> value(probabilistic)
+	//private List<CollaboratorData> collaboratorsData; // All the collaborators AIDs
 	private Queue<Task> tasks; // A task Queue ordered by crescent number of precedences
 	private List<Task> tasksCompleted; // List of Tasks already done
 	private boolean projectFinished; // Boolean flag indicating the project is over
 	private double projectDuration; // The duration of the project when ended
+	private AID coordinatorAID;
 	
 	// Coordinator Behaviours
 	private OneShotBehaviour createProjectBehaviour;
 	private OneShotBehaviour endProjectBehaviour;
 	
 	public Coordinator(){
-		collaboratorsData = new ArrayList<CollaboratorData>();
-		tasks = new PriorityQueue<Task>(); // se calhar outra queue....
-		tasksCompleted = new ArrayList<Task>();
-		projectFinished = false;
+		this.collaboratorsData = new HashMap<CollaboratorData, AID>();
+		this.tasks = new PriorityQueue<Task>(); // se calhar outra queue....
+		this.tasksCompleted = new ArrayList<Task>();
+		this.projectFinished = false;
 		
 		// Create Behaviours 
 		createProjectBehaviour();
@@ -49,9 +53,16 @@ public class Coordinator extends Agent{
 		// Add Behaviours
 		addBehaviour(createProjectBehaviour);
 	}
-	
-	public ArrayList<CollaboratorData> getCollaboratorsAIDs(){
-		return (ArrayList<CollaboratorData>) this.collaboratorsData;
+		
+	public static CollaboratorData getCollaboratorDataByAID(AID collaboratorAID){
+		CollaboratorData collaboratorData = null;
+		for (Entry<CollaboratorData, AID> entry : collaboratorsData.entrySet()) {
+            if (entry.getValue().equals(collaboratorAID)) {
+                collaboratorData = entry.getKey();
+                break;
+            }
+        }
+		return collaboratorData;
 	}
 	
 	public void setModel(Model model){
@@ -59,7 +70,7 @@ public class Coordinator extends Agent{
 	}
 	
 	public boolean isProjectFinish(){
-		return projectFinished;
+		return this.projectFinished;
 	}
 	
 	/*public void addCollaborator(AID collaboratorAID){

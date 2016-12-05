@@ -17,8 +17,7 @@ public class Interaction {
 		this.coordinatorAID = coordinatorAID;
 		this.collaboratorAID = collaboratorAID;
 		this.interaction_id = interaction_id;
-		Collaborator collaborator = new Collaborator();
-		CollaboratorData collaboratorData = collaborator.getCollaboratorDataByAID(this.collaboratorAID);
+		CollaboratorData collaboratorData = Coordinator.getCollaboratorDataByAID(this.collaboratorAID);
 		if (collaboratorData.hasSkills(this.task))
 			this.rating_value = 1;
 		else
@@ -29,6 +28,5 @@ public class Interaction {
 	public int getRatingValue(){
 		return this.rating_value;
 	}
-	
 	
 }
