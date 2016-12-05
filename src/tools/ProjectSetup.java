@@ -21,7 +21,9 @@ import data.Task;
 import jade.Boot;
 import jade.core.*;
 import jade.core.Runtime;
+import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
+import jade.wrapper.StaleProxyException;
 import parser.Parser;
 
 public class ProjectSetup {
@@ -72,7 +74,10 @@ public class ProjectSetup {
 					System.out.println("FILE: "+ficheiro);
 					
 					parser.execute(ficheiro);
-					
+					/*
+					String[] arguments = {"-gui"};
+					Boot.main(arguments);
+					*/
 					
 					// Get a hold on JADE runtime
 					rt = Runtime.instance();
@@ -156,17 +161,21 @@ public class ProjectSetup {
 			
 			//coord.addTask(myTask);		// A DAR ERRO !!!!!
 			
-			/*
-			System.out.println("TASKS with precedencies and skills ADDED TO COORDINATOR");
-			try {
-				AgentController coordinatorAgent = cc.acceptNewAgent("Coord", coord);
-			} catch (StaleProxyException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} 
-			System.out.println("AGENT COORDINATOR CREATED");
-			*/
+			
 		}
+		
+		
+		System.out.println("TASKS with precedencies and skills ADDED TO COORDINATOR");
+		try {
+			AgentController coordinatorAgent = cc.acceptNewAgent("Coord", coord);
+		} catch (StaleProxyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		System.out.println("AGENT COORDINATOR CREATED");
+		
+		
+		
 		
 		return 0;
 	}
