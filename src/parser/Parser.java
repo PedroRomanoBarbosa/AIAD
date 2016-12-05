@@ -3,6 +3,7 @@ package parser;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.ErrorManager;
 
 import javax.xml.parsers.*;
@@ -17,7 +18,8 @@ public class Parser {
 	private String project_coordinator;
 	private ArrayList<String> project_tasks;
 	private HashMap<String,HashMap<String,Float>> collaborators = new HashMap<String,HashMap<String,Float>>();
-	private HashMap<String, ArrayList<String>> taskSkills = new HashMap<String, ArrayList<String>>();
+	private HashMap<String, List<String>> taskSkills = new HashMap<String, List<String>>();
+	private HashMap<String, List<String>> taskPrecs = new HashMap<String, List<String>>();
 	
 	
 	public void setModelName(String name){
@@ -60,12 +62,20 @@ public class Parser {
 		return this.collaborators;
 	}
 	
-	public void addTaskSkills(String task, ArrayList<String> skills) {
+	public void addTaskSkills(String task, List<String> skills) {
 		this.taskSkills.put(task, skills);
 	}
 	
-	public HashMap<String, ArrayList<String>> getTaskSkills(){
+	public HashMap<String, List<String>> getTaskSkills(){
 		return taskSkills;
+	}
+	
+	public void addTaskPrecs(String task, List<String> precs) {
+		this.taskPrecs.put(task, precs);
+	}
+	
+	public HashMap<String, List<String>> getTaskPrecs(){
+		return taskPrecs;
 	}
 	
 
@@ -190,30 +200,48 @@ public class Parser {
 	}
 	
 	public void parseTasks(Node node){
-		Node nnode, nnnode;
-		NodeList nodeChild, nnodeChild;
+		Node nnode, nnnode, nnnnode;
+		NodeList nodeChild, nnodeChild, nnnodeChild;
 		String task;
 		ArrayList<String> skills = new ArrayList<String>();
+		ArrayList<String> precTasks = new ArrayList<String>();
 		
 		nodeChild = node.getChildNodes();
 		for (int i = 0; i < nodeChild.getLength(); i++) {
 			nnode = nodeChild.item(i);
 			if (nnode.getNodeType() == Node.ELEMENT_NODE) {
 				task = nnode.getAttributes().getNamedItem("id").getNodeValue();
-				
 				nnodeChild = nnode.getChildNodes();
-				skills = new ArrayList<String>();
 				for (int j = 0; j < nnodeChild.getLength(); j++) {
 					nnnode = nnodeChild.item(j);
-					if (nnnode.getNodeType() == Node.ELEMENT_NODE) {
-						skills.add(nnnode.getAttributes().getNamedItem("name").getNodeValue());
+					if (nnnode.getNodeName() == "skills") {
+						skills = new ArrayList<String>();
+						nnnodeChild = nnnode.getChildNodes();
+						for (int j2 = 0; j2 < nnnodeChild.getLength(); j2++) {
+							nnnnode = nnnodeChild.item(j2);
+							if (nnnnode.getNodeType() == Node.ELEMENT_NODE) {
+								skills.add(nnnnode.getAttributes().getNamedItem("name").getNodeValue());
+							}
+						}
+						addTaskSkills(task, skills);
+					}
+					else if (nnnode.getNodeName() == "tasks") {
+						precTasks = new ArrayList<String>();
+						nnnodeChild = nnnode.getChildNodes();
+						for (int j2 = 0; j2 < nnnodeChild.getLength(); j2++) {
+							nnnnode = nnnodeChild.item(j2);
+							if (nnnnode.getNodeType() == Node.ELEMENT_NODE) {
+								precTasks.add(nnnnode.getAttributes().getNamedItem("id").getNodeValue());
+							}
+							
+						}
+						addTaskPrecs(task, precTasks);
 					}
 				}
-				addTaskSkills(task, skills);
 			}
-			
 		}
-		System.out.println("\t\t"+getTaskSkills());
+		System.out.println("\t\tskills: "+getTaskSkills());
+		System.out.println("\t\ttasks: "+getTaskPrecs());
 	}
 	
 	public static void errorMsg(String msg){

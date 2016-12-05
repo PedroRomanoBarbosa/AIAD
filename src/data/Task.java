@@ -8,17 +8,25 @@ public class Task implements Comparable<Task>{
 	private int taskId;
 	private String taskType;
 	private List<String> skillsToPerform; //Skills to perform this task
-	private int[] precedences; //list of taskId
+	private List<String> precedences; //list of taskId
 	private boolean isDone;
 	private int duration = 0;
 	
-	public Task(int... dp) {
+	public Task(List<String> dp) {
 		taskId = id;
 		id++;
 		skillsToPerform = new ArrayList<String>();
 		this.isDone = false;
 		this.taskId = taskId;
 		precedences = dp;
+	}
+	
+	public Task() {
+		taskId = id;
+		id++;
+		skillsToPerform = new ArrayList<String>();
+		this.isDone = false;
+		this.taskId = taskId;
 	}
 	
 	public boolean isDone(){
@@ -29,8 +37,8 @@ public class Task implements Comparable<Task>{
 		return this.skillsToPerform;
 	}
 	
-	public void setSkillsToPerformTask(String e){
-		this.skillsToPerform.add(e);
+	public void setSkillsToPerformTask(List<String> e){
+		this.skillsToPerform.addAll(e);
 	}
 	
 	/**
@@ -38,7 +46,11 @@ public class Task implements Comparable<Task>{
 	 * @return number of precedences.
 	 */
 	public int getPrecedenceNumber() {
-		return precedences.length;
+		return precedences.size();
+	}
+	
+	public List<String> getPrecedences(){
+		return precedences;
 	}
 	
 	@Override
@@ -52,8 +64,8 @@ public class Task implements Comparable<Task>{
 		}
 	}
 	
-	public Integer getPrecedence(int index) {
-		return precedences[index];
+	public String getPrecedence(int index) {
+		return precedences.get(index);
 	}
 	
 	public int getTaskId() {
@@ -63,8 +75,8 @@ public class Task implements Comparable<Task>{
 	@Override
 	public String toString() {
 		String s = "Task: " + taskId + " (";
-		for (int i : precedences) {
-			s += " " + i;
+		for (int i = 0; i < precedences.size(); i++) {
+			s += " " + precedences.get(i);
 		}
 		s += " )";
 		return s;
