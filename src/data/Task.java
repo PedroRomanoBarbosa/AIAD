@@ -29,6 +29,10 @@ public class Task implements Comparable<Task>{
 		return this.skillsToPerform;
 	}
 	
+	public void setSkillsToPerformTask(String e){
+		this.skillsToPerform.add(e);
+	}
+	
 	/**
 	 * Returns the number of precedences this task has.
 	 * @return number of precedences.
