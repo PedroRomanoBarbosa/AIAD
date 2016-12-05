@@ -1,7 +1,6 @@
 package data;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Task implements Comparable<Task>{
@@ -17,11 +16,17 @@ public class Task implements Comparable<Task>{
 		taskId = id;
 		id++;
 		skillsToPerform = new ArrayList<String>();
+		this.isDone = false;
+		this.taskId = taskId;
 		precedences = dp;
 	}
 	
 	public boolean isDone(){
 		return this.isDone;
+	}
+	
+	public List<String> getSkillsToPerformTask(){
+		return this.skillsToPerform;
 	}
 	
 	/**

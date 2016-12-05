@@ -2,7 +2,11 @@ package agents;
 
 import java.util.HashMap;
 import java.util.Random;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
 
+import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.FailureException;
@@ -11,6 +15,8 @@ import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
+
+import data.CollaboratorData;
 import data.Task;
 
 
@@ -20,9 +26,16 @@ public class Collaborator extends Agent{
 	private HashMap<String,Integer> skills; // skillId -> value(probabilistic)
 	private Task currentTask; // The current task this collaborator is doing
 	private boolean ocuppied; // Whether this agent is occupied or not
+	private Coordinator projectCoordinator; //The project coordinator
+	private HashMap<CollaboratorData,AID> collaboratorData; //skillId -> value(probabilistic)
 	
-	public HashMap<String, Integer> getSkills() {
-		return this.skills;
+	public Collaborator(){
+		this.collaboratorData = new HashMap<CollaboratorData, AID>();
+		this.projectCoordinator = new Coordinator();
+	}
+	
+	public HashMap getSkills(){
+		return this.collaboratorData;
 	}
 	
 	public Task getCurrentTask() {
@@ -85,4 +98,16 @@ public class Collaborator extends Agent{
 		doWait(n * 1000);
 	}
 	
+	public CollaboratorData getCollaboratorDataByAID(AID collaboratorAID){
+		CollaboratorData collaboratorData = null;
+		for (Entry<CollaboratorData, AID> entry : this.collaboratorData.entrySet()) {
+            if (entry.getValue().equals(collaboratorAID)) {
+                collaboratorData = entry.getKey();
+                break;
+            }
+        }
+		return collaboratorData;
+	}
+
+
 }

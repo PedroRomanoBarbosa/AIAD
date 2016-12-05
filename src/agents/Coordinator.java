@@ -1,7 +1,6 @@
 package agents;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -17,7 +16,6 @@ import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 import jade.proto.AchieveREInitiator;
-import jade.proto.FIPAProtocolNames;
 import data.Task;
 import models.Model;
 
@@ -55,7 +53,11 @@ public class Coordinator extends Agent{
 		// Add Behaviours
 		addBehaviour(createProjectBehaviour);
 	}
-
+	
+	public ArrayList<AID> getCollaboratorsAIDs(){
+		return (ArrayList<AID>) this.collaborators;
+	}
+	
 	public void setModel(Model model){
 		this.chosenModel = model;
 	}
