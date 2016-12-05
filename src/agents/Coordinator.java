@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Vector;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -30,11 +31,13 @@ public class Coordinator extends Agent{
 	private List<Integer> tasksCompleted; // List of Tasks Ids already done
 	private boolean projectFinished; // Boolean flag indicating the project is over
 	private double projectDuration; // The duration of the project when ended
+	private Task selectedTask;
+	private int potencialCollaboratorIndex;
 	
 	// Coordinator Behaviours
 	private OneShotBehaviour createProjectBehaviour;
 	private OneShotBehaviour endProjectBehaviour;
-	private SimpleBehaviour assignTaks;
+	private OneShotBehaviour assignTaksBehaviour, sendTaskBehaviour;
 
 	@Override
 	protected void setup() {
@@ -45,10 +48,13 @@ public class Coordinator extends Agent{
 		
 		//Tests
 		tasks.add(new Task());
+		tasks.add(new Task());
+		tasks.add(new Task());
 		
 		// Create Behaviours
 		createProjectBehaviour();
 		createAssignTaskBehaviour();
+		createSendTaskBehaviour();
 		
 		// Add Behaviours
 		addBehaviour(createProjectBehaviour);
@@ -79,7 +85,7 @@ public class Coordinator extends Agent{
 			@Override
 			public void action() {
 				getAgents();
-				addBehaviour(assignTaks);
+				addBehaviour(assignTaksBehaviour);
 			}
 		};
 	}
@@ -102,16 +108,11 @@ public class Coordinator extends Agent{
 	}
 	
 	private void createAssignTaskBehaviour() {
-		assignTaks = new SimpleBehaviour() {
-
-			@Override
-			public boolean done() {
-				return projectFinished;
-			}
+		assignTaksBehaviour = new OneShotBehaviour() {
 			
 			@Override
 			public void action() {
-				printState();
+				//printState();
 				boolean assign = true;
 				
 				// If the task queue still has tasks
@@ -133,7 +134,8 @@ public class Coordinator extends Agent{
 					
 					// If there are no precedences to be done in this task try to assign it
 					if(assign) {
-						assignTask(task);
+						selectedTask = task;
+						addBehaviour(sendTaskBehaviour);
 						//tasksCompleted.add(task.getTaskId());
 					}
 				} else {
@@ -145,44 +147,60 @@ public class Coordinator extends Agent{
 		};
 	}
 	
+	private void createSendTaskBehaviour() {
+		sendTaskBehaviour = new OneShotBehaviour() {
+			
+			@Override
+			public void action() {
+				//TODO se estiverem todos ocupados esperar
+				
+				//TODO Verificar se o colaborador pode efetuar a tarefa
+				
+				//TODO Verificar qual o melhor(TRUST) para fazer a tarefa
+				
+				// Send FIPA complient request protocol message
+				AID collaborator = collaborators.get(potencialCollaboratorIndex); //TODO change to best collaborator
+				ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
+				message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+				message.addReceiver(collaborator);
+				message.setContent("ASSIGN TASK " + selectedTask.getTaskId());
+				
+				//Initiate request //TODO Maybe this approach can cause problems...
+				boolean assign = false;
+				boolean block = false;
+				//TODO check for valid and/or best collaborator to do task
+				addBehaviour(new AchieveREInitiator(getAgent(), message) {
+
+					@Override
+					protected void handleInform(ACLMessage inform) {
+						System.out.println("Agent "+ inform.getSender().getName() + " successfully performed the requested action");
+					}
+					
+					@Override
+					protected void handleAgree(ACLMessage agree) {
+						System.out.println("Agent "+ agree.getSender().getName() + " agreed to perform the requested action");
+						addBehaviour(assignTaksBehaviour);
+					}
+
+					@Override
+					protected void handleRefuse(ACLMessage refuse) {
+						System.out.println("Agent " + refuse.getSender().getName() + " is ocuppied");
+						potencialCollaboratorIndex = 0; //TODO change this to the second best available
+						addBehaviour(sendTaskBehaviour);
+					}
+
+					@Override
+					protected void handleFailure(ACLMessage failure) {
+						System.out.println("There was a failure!");
+					}
+					
+				});
+			}
+		};
+	}
+	
 	public void assignTask(Task t) {
-		//TODO se estiverem todos ocupados esperar
 		
-		//TODO Verificar se o colaborador pode efetuar a tarefa
-		
-		//TODO Verificar qual o melhor(TRUST) para fazer a tarefa
-		
-		// Send FIPA complient request protocol message
-		AID collaborator = collaborators.get(0); //TODO change to best collaborator
-		ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
-		message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-		message.addReceiver(collaborator);
-		message.setContent("ASSIGN TASK " + t.getTaskId());
-		
-		//Initiate request //TODO Maybe this approach can cause problems...
-		addBehaviour(new AchieveREInitiator(this, message){
-
-			@Override
-			protected void handleInform(ACLMessage inform) {
-				System.out.println("Agent "+ inform.getSender().getName() + " successfully performed the requested action");
-			}
-			
-			@Override
-			protected void handleAgree(ACLMessage agree) {
-				System.out.println("Agent "+ agree.getSender().getName() + " agreed to perform the requested action");
-			}
-
-			@Override
-			protected void handleRefuse(ACLMessage refuse) {
-				System.out.println("Agent " + refuse.getSender().getName() + " refused to perform the requested action");
-			}
-
-			@Override
-			protected void handleFailure(ACLMessage failure) {
-				System.out.println("There was a failure!");
-			}
-			
-		});
 	}
 	
 	public void printState() {
