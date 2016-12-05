@@ -120,7 +120,7 @@ public class Coordinator extends Agent{
 					
 					// Check if task precedences are all done or not
 					for(int i = 0; (i < task.getPrecedenceNumber()) && (assign == true); i++) {
-						int id = task.getPrecedence(i);
+						String id = task.getPrecedence(i);
 						
 						// If there is at least one precedence to be done do not assign this task and end loop
 						if(!tasksCompleted.contains(id)){
