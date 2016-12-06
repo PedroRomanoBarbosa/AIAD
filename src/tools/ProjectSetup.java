@@ -74,10 +74,7 @@ public class ProjectSetup {
 					System.out.println("FILE: "+ficheiro);
 					
 					parser.execute(ficheiro);
-					/*
-					String[] arguments = {"-gui"};
-					Boot.main(arguments);
-					*/
+					
 					
 					// Get a hold on JADE runtime
 					rt = Runtime.instance();
@@ -87,6 +84,8 @@ public class ProjectSetup {
 					// Create a new non-main container, connecting to the default
 					// main container (i.e. on this host, port 1099)
 					cc = rt.createMainContainer(p); 
+					
+					
 					
 					
 					initAgents(cc);
@@ -163,11 +162,12 @@ public class ProjectSetup {
 			
 			
 		}
-		
+		AgentController coordinatorAgent = null;
 		
 		System.out.println("TASKS with precedencies and skills ADDED TO COORDINATOR");
 		try {
-			AgentController coordinatorAgent = cc.acceptNewAgent("Coord", coord);
+			coordinatorAgent = cc.acceptNewAgent("Coord", coord);
+			coordinatorAgent.start();
 		} catch (StaleProxyException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -175,7 +175,12 @@ public class ProjectSetup {
 		System.out.println("AGENT COORDINATOR CREATED");
 		
 		
-		
+		try {
+		    AgentController rma = cc.createNewAgent("rma", "jade.tools.rma.rma", null);
+		    rma.start();
+		} catch(StaleProxyException e) {
+		    e.printStackTrace();
+		}
 		
 		return 0;
 	}

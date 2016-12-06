@@ -85,7 +85,7 @@ public class Coordinator extends Agent{
 			@Override
 			public void action() {
 				getAgents();
-				addBehaviour(assignTaksBehaviour);
+				//addBehaviour(assignTaksBehaviour);
 			}
 		};
 	}
@@ -97,10 +97,11 @@ public class Coordinator extends Agent{
 			AMSAgentDescription[] agents = AMSService.search(this, new AMSAgentDescription(), c);
 			System.out.println("All Collaborator agents:");
 			for (AMSAgentDescription amsAgentDescription : agents) {
-				if(amsAgentDescription.getName().getLocalName().equals("Lulu")){
+				
+				//if(amsAgentDescription.getName().getLocalName().equals("Lulu")){
 					System.out.println(amsAgentDescription.getName());
-					collaborators.add(amsAgentDescription.getName());
-				}
+					//collaborators.add(amsAgentDescription.getName());
+				//}
 			}
 		} catch (FIPAException e) {
 			e.printStackTrace();
