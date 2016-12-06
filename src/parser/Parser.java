@@ -21,6 +21,7 @@ public class Parser {
 	private HashMap<String, List<String>> taskSkills = new HashMap<String, List<String>>();
 	private HashMap<String, List<String>> taskPrecs = new HashMap<String, List<String>>();
 	
+	// TODO: consider project id
 	
 	public void setModelName(String name){
 		this.modelName = name;
