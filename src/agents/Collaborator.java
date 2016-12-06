@@ -1,5 +1,7 @@
 package agents;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.Iterator;
@@ -23,16 +25,13 @@ import data.Task;
 public class Collaborator extends Agent{
 	private static final long serialVersionUID = 1L;
 	
-	private HashMap<String,Integer> skills; // skillId -> value(probabilistic)
+	private HashMap<String, Float> skills; // skillId -> value(probabilistic)
 	private Task currentTask; // The current task this collaborator is doing
 	private boolean ocuppied; // Whether this agent is occupied or not
 	private Coordinator projectCoordinator; //The project coordinator
 	private HashMap<CollaboratorData,AID> collaboratorData; //skillId -> value(probabilistic)
 	
-	public Collaborator(){
-		this.collaboratorData = new HashMap<CollaboratorData, AID>();
-		this.projectCoordinator = new Coordinator();
-	}
+	
 	
 	public HashMap getSkills(){
 		return this.collaboratorData;
@@ -46,15 +45,34 @@ public class Collaborator extends Agent{
 		this.currentTask = task;
 	}
 	
-	public void addSkill(String skillId, Integer performance) {
+	public void addSkill(String skillId, Float performance) {
 		this.skills.put(skillId, performance);
 	}
 
 	@Override
 	protected void setup() {
-		skills = new HashMap<String, Integer>();
+		skills = new HashMap<String, Float>();
 		ocuppied = false;
 		createFIPARequestBehaviour();
+		
+		
+		// TO CREATE COLLABORATORS FROM GUI
+		Object[] args = getArguments();
+		String s;	
+        if (args != null) {
+            for (int i = 0; i<args.length; i++) {
+                s = (String) args[i];
+                //System.out.println("p" + i + ": " + s);
+                
+                String[] elements = s.split("\\s{1,}");
+                //System.out.println(Arrays.toString(elements));
+                
+                for (int i1 = 0; i1 < elements.length-1; i1+=2) {
+                	skills.put( elements[i1], Float.parseFloat((String) elements[i1+1]));
+                }
+                System.out.println(skills);
+            }
+        }
 	}
 	
 	/**

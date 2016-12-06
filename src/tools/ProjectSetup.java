@@ -134,8 +134,11 @@ public class ProjectSetup {
 		List<String> skills;
 		List<String> precs;
 		String task;
+		Task myTask = null;
 		
 		coord = new Coordinator();
+		
+		// TODO: set skills
 		
 		ArrayList<String> projectTasks = parser.getProjectTasks();
 		for (int i = 0; i < projectTasks.size(); i++) {
@@ -153,12 +156,10 @@ public class ProjectSetup {
 			System.out.println(precs);
 			
 			
-			Task myTask = new Task(precs);
+			myTask = new Task(precs);
 			myTask.setSkillsToPerformTask(skills);
 			System.out.println(myTask.getSkillsToPerformTask());
 			System.out.println(myTask.getPrecedences());
-			
-			//coord.addTask(myTask);		// A DAR ERRO !!!!!
 			
 			
 		}
@@ -181,6 +182,8 @@ public class ProjectSetup {
 		} catch(StaleProxyException e) {
 		    e.printStackTrace();
 		}
+		
+		coord.addTask(myTask);		// A DAR ERRO !!!!!
 		
 		return 0;
 	}

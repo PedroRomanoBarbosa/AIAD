@@ -98,10 +98,10 @@ public class Coordinator extends Agent{
 			System.out.println("All Collaborator agents:");
 			for (AMSAgentDescription amsAgentDescription : agents) {
 				
-				//if(amsAgentDescription.getName().getLocalName().equals("Lulu")){
+				if(amsAgentDescription.getName().getLocalName().equals("Lulu")){
 					System.out.println(amsAgentDescription.getName());
-					//collaborators.add(amsAgentDescription.getName());
-				//}
+					//collaborators.add(amsAgentDescription.getName());		//TODO
+				}
 			}
 		} catch (FIPAException e) {
 			e.printStackTrace();

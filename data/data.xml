@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <scenario>
-  <project model='fire'>
+  <project id='p01' model='fire'>
     <intervenients>
       <coordinator id='coord01' />
       <collaborators>
@@ -47,23 +47,19 @@
     </collaborator>
 
     <collaborator id='col03'>
-
       <skillProb skill='s12' prob='.2'/>
       <skillProb skill='s13' prob='.3'/>
       <skillProb skill='s14' prob='.4'/>
       <skillProb skill='s15' prob='.5'/>
       <skillProb skill='s18' prob='.6'/>
-
     </collaborator>
 
     <collaborator id='col04'>
-
       <skillProb skill='s16' prob='.7'/>
       <skillProb skill='s17' prob='.8'/>
       <skillProb skill='s18' prob='.9'/>
       <skillProb skill='s19' prob='1'/>
       <skillProb skill='s20' prob='.1'/>
-
     </collaborator>
   </collaborators>
 
@@ -78,7 +74,6 @@
         <skill name='s19' />
       </skills>
       <tasks>
-        <task id='t06' />
       </tasks>
     </task>
 
@@ -96,6 +91,7 @@
         <skill name='s20' />
       </skills>
       <tasks>
+          <task id='t06' />
       </tasks>
     </task>
 
