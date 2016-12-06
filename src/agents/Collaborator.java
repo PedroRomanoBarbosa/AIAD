@@ -24,7 +24,7 @@ import data.Task;
 
 public class Collaborator extends Agent{
 	private static final long serialVersionUID = 1L;
-	
+	private String id;
 	private HashMap<String, Float> skills; // skillId -> value(probabilistic)
 	private Task currentTask; // The current task this collaborator is doing
 	private boolean ocuppied; // Whether this agent is occupied or not
@@ -125,6 +125,14 @@ public class Collaborator extends Agent{
             }
         }
 		return collaboratorData;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 

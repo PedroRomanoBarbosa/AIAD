@@ -25,6 +25,7 @@ public class Coordinator extends Agent{
 	
 	// Project Meta Information
 	private Model chosenModel; // The trust model chosen
+	private ArrayList<Collaborator> myCollaborators = new ArrayList<Collaborator>();
 	private List<AID> collaborators; // All the collaborators AIDs
 	private Queue<Task> tasks; // A task Queue ordered by crescent number of precedences
 	private List<Task> tasksList;
@@ -85,7 +86,7 @@ public class Coordinator extends Agent{
 			@Override
 			public void action() {
 				getAgents();
-				//addBehaviour(assignTaksBehaviour);
+				//addBehaviour(assignTaksBehaviour);	//TODO
 			}
 		};
 	}
@@ -216,6 +217,14 @@ public class Coordinator extends Agent{
 			System.out.print(" " + i);
 		}
 		System.out.println(" )\n");
+	}
+
+	public ArrayList<Collaborator> getMyCollaborators() {
+		return myCollaborators;
+	}
+
+	public void addMyCollaborators(Collaborator myCollaborator) {
+		this.myCollaborators.add(myCollaborator);
 	}
 	
 }

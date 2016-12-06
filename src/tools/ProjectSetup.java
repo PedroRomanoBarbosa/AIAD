@@ -75,6 +75,8 @@ public class ProjectSetup {
 					
 					parser.execute(ficheiro);
 					
+					// TODO: consider project id
+					
 					
 					// Get a hold on JADE runtime
 					rt = Runtime.instance();
@@ -85,10 +87,15 @@ public class ProjectSetup {
 					// main container (i.e. on this host, port 1099)
 					cc = rt.createMainContainer(p); 
 					
+					try {
+					    AgentController rma = cc.createNewAgent("rma", "jade.tools.rma.rma", null);
+					    rma.start();
+					} catch(StaleProxyException e1) {
+					    e1.printStackTrace();
+					}
 					
 					
-					
-					initAgents(cc);
+					initAgents();
 				} 
 			}
 		});
@@ -110,36 +117,33 @@ public class ProjectSetup {
 		frame.setVisible(true);
 	}
 	
-	public static void initAgents(ContainerController cc) {
-		/*
-		String agents = "";
-		
-		agents += initCoordinator();
-		agents += ";";
-		agents += initCollaborators();
-		
-		
-		String[] arguments = {"-gui", agents};
-		Boot.main(arguments);
-		
-		//Boot.parseCmdLineArgs(arguments)
-		*/
+	public static void initAgents() {
 		initCoordinator();
+		initCollaborators();
 	}
 	
 	public static int initCoordinator(){
-//		return parser.getCoordinator()+":agents.Coordinator";
 		HashMap<String, List<String>> taskSkills;
 		HashMap<String, List<String>> taskPrecs;
 		List<String> skills;
 		List<String> precs;
 		String task;
 		Task myTask = null;
+		AgentController coordinatorAgent = null;
 		
 		coord = new Coordinator();
 		
-		// TODO: set skills
+		// CREATE AGENT COORDINATOR
+		try {
+			coordinatorAgent = cc.acceptNewAgent(parser.getCoordinator(), coord);
+			coordinatorAgent.start();
+		} catch (StaleProxyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		System.out.println("AGENT COORDINATOR CREATED");
 		
+		// ADD PROJECT TASKS
 		ArrayList<String> projectTasks = parser.getProjectTasks();
 		for (int i = 0; i < projectTasks.size(); i++) {
 			task = projectTasks.get(i);
@@ -161,44 +165,45 @@ public class ProjectSetup {
 			System.out.println(myTask.getSkillsToPerformTask());
 			System.out.println(myTask.getPrecedences());
 			
-			
+			coord.addTask(myTask);
 		}
-		AgentController coordinatorAgent = null;
-		
 		System.out.println("TASKS with precedencies and skills ADDED TO COORDINATOR");
-		try {
-			coordinatorAgent = cc.acceptNewAgent("Coord", coord);
-			coordinatorAgent.start();
-		} catch (StaleProxyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-		System.out.println("AGENT COORDINATOR CREATED");
 		
-		
-		try {
-		    AgentController rma = cc.createNewAgent("rma", "jade.tools.rma.rma", null);
-		    rma.start();
-		} catch(StaleProxyException e) {
-		    e.printStackTrace();
-		}
-		
-		coord.addTask(myTask);		// A DAR ERRO !!!!!
 		
 		return 0;
 	}
 	
-	public static String initCollaborators(){
-		String tempColl = "";
-		
-		String sufix = ":agents.Collaborator;";
+	public static void initCollaborators(){
+		Collaborator col;
+		//ArrayList<Collaborator> myCollaborators = null;
+		ArrayList<AgentController> collaboratorsAgents;
+		AgentController collaboratorAgent;
 		ArrayList<String> collaborators = parser.getProjectCollaborators();
+		String collaborator;
 		
 		for (int i = 0; i < collaborators.size(); i++) {
-			tempColl += collaborators.get(i);
-			tempColl += sufix;
+			collaborator = collaborators.get(i);
+			col = new Collaborator();
+			col.setId(collaborator);
+			
+			coord.addMyCollaborators(col);
+			// CREATE AGENTS COLLABORATORS
+			try {
+				collaboratorAgent = cc.acceptNewAgent(collaborator, col);
+				collaboratorAgent.start();
+			} catch (StaleProxyException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+			System.out.println("AGENT COLLABORATOR "+collaborator+" CREATED");
 		}
 		
-		return tempColl;
+
+		
+		// TODO: add skills
+		
+		
 	}
+	
+	
 }
