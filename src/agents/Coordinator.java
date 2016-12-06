@@ -4,12 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.Vector;
 
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
-import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.AMSService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
@@ -17,6 +15,7 @@ import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 import jade.proto.AchieveREInitiator;
+import data.CollaboratorData;
 import data.Task;
 import models.Model;
 
@@ -26,7 +25,8 @@ public class Coordinator extends Agent{
 	// Project Meta Information
 	private Model chosenModel; // The trust model chosen
 	private ArrayList<Collaborator> myCollaborators = new ArrayList<Collaborator>();
-	private List<AID> collaborators; // All the collaborators AIDs
+	private List<AID> collaborators; // All the collaborators AIDs //TODO delete this
+	private List<CollaboratorData> collaboratorData;
 	private Queue<Task> tasks; // A task Queue ordered by crescent number of precedences
 	private List<Task> tasksList;
 	private List<Integer> tasksCompleted; // List of Tasks Ids already done
@@ -45,6 +45,7 @@ public class Coordinator extends Agent{
 		collaborators = new ArrayList<AID>();
 		tasks = new PriorityQueue<Task>();
 		tasksCompleted = new ArrayList<Integer>();
+		collaboratorData = new ArrayList<CollaboratorData>();
 		projectFinished = false;
 		
 		//Tests
@@ -203,6 +204,10 @@ public class Coordinator extends Agent{
 	
 	public void assignTask(Task t) {
 		
+	}
+	
+	public List<CollaboratorData> getCollaboratorData() {
+		return collaboratorData;
 	}
 	
 	public void printState() {
