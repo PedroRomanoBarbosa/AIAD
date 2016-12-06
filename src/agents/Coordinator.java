@@ -44,6 +44,7 @@ public class Coordinator extends Agent{
 		collaborators = new ArrayList<AID>();
 		tasks = new PriorityQueue<Task>();
 		tasksCompleted = new ArrayList<Integer>();
+		collaboratorData = new ArrayList<CollaboratorData>();
 		projectFinished = false;
 		
 		//Tests
