@@ -24,4 +24,14 @@ public class CollaboratorData {
 	public void addSkill(String skillId, double performance){
 		this.skills.put(skillId, performance);
 	}
+	
+	public boolean canExecuteTask(Task t) {
+		for (int i = 0; i < t.getSkillsToPerformTask().size(); i++) {
+			String skill = t.getSkillsToPerformTask().get(i);
+			if(!skills.containsKey(skill)) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

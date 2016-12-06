@@ -160,7 +160,7 @@ public class ProjectSetup {
 			System.out.println(precs);
 			
 			
-			myTask = new Task(precs);
+			myTask = new Task(task, precs);
 			myTask.setSkillsToPerformTask(skills);
 			System.out.println(myTask.getSkillsToPerformTask());
 			System.out.println(myTask.getPrecedences());

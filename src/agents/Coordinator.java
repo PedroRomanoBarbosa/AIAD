@@ -15,8 +15,10 @@ import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 import jade.proto.AchieveREInitiator;
+
 import data.CollaboratorData;
 import data.Task;
+
 import models.Model;
 
 public class Coordinator extends Agent{
@@ -26,10 +28,10 @@ public class Coordinator extends Agent{
 	private Model chosenModel; // The trust model chosen
 	private ArrayList<Collaborator> myCollaborators = new ArrayList<Collaborator>();
 	private List<AID> collaborators; // All the collaborators AIDs //TODO delete this
-	private List<CollaboratorData> collaboratorData;
+	private List<CollaboratorData> collaboratorsData;
 	private Queue<Task> tasks; // A task Queue ordered by crescent number of precedences
 	private List<Task> tasksList;
-	private List<Integer> tasksCompleted; // List of Tasks Ids already done
+	private List<String> tasksCompleted; // List of Tasks Ids already done
 	private boolean projectFinished; // Boolean flag indicating the project is over
 	private double projectDuration; // The duration of the project when ended
 	private Task selectedTask;
@@ -44,14 +46,16 @@ public class Coordinator extends Agent{
 	protected void setup() {
 		collaborators = new ArrayList<AID>();
 		tasks = new PriorityQueue<Task>();
-		tasksCompleted = new ArrayList<Integer>();
-		collaboratorData = new ArrayList<CollaboratorData>();
+		tasksCompleted = new ArrayList<String>();
+		collaboratorsData = new ArrayList<CollaboratorData>();
 		projectFinished = false;
 		
 		//Tests
-		tasks.add(new Task());
-		tasks.add(new Task());
-		tasks.add(new Task());
+		/*
+		tasks.add(new Task("ID0"));
+		tasks.add(new Task("ID1"));
+		tasks.add(new Task("ID2"));
+		*/
 		
 		// Create Behaviours
 		createProjectBehaviour();
@@ -92,6 +96,7 @@ public class Coordinator extends Agent{
 		};
 	}
 	
+	// TEST METHOD
 	private void getAgents() {
 		try {
 			SearchConstraints c = new SearchConstraints();
@@ -139,7 +144,6 @@ public class Coordinator extends Agent{
 					if(assign) {
 						selectedTask = task;
 						addBehaviour(sendTaskBehaviour);
-						//tasksCompleted.add(task.getTaskId());
 					}
 				} else {
 					// End project!
@@ -166,7 +170,8 @@ public class Coordinator extends Agent{
 				ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
 				message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
 				message.addReceiver(collaborator);
-				message.setContent("ASSIGN TASK " + selectedTask.getTaskId());
+				Task taskToAssign = selectedTask;
+				message.setContent("ASSIGN TASK " + taskToAssign.getTaskId());
 				
 				//Initiate request //TODO Maybe this approach can cause problems...
 				boolean assign = false;
@@ -177,6 +182,7 @@ public class Coordinator extends Agent{
 					@Override
 					protected void handleInform(ACLMessage inform) {
 						System.out.println("Agent "+ inform.getSender().getName() + " successfully performed the requested action");
+						tasksCompleted.add(taskToAssign.getTaskId());
 					}
 					
 					@Override
@@ -202,12 +208,18 @@ public class Coordinator extends Agent{
 		};
 	}
 	
-	public void assignTask(Task t) {
-		
+	public List<CollaboratorData> getCandidateColaborators(Task t) {
+		ArrayList<CollaboratorData> candidates = new ArrayList<CollaboratorData>();
+		for (int i = 0; i < collaboratorsData.size(); i++) {
+			if(collaboratorsData.get(i).canExecuteTask(t)) {
+				candidates.add(collaboratorsData.get(i));
+			}
+		}
+		return candidates;
 	}
 	
 	public List<CollaboratorData> getCollaboratorData() {
-		return collaboratorData;
+		return collaboratorsData;
 	}
 	
 	public void printState() {
@@ -218,8 +230,8 @@ public class Coordinator extends Agent{
 			System.out.println(task);
 		}
 		System.out.print("TASKS DONE: (");
-		for (int i : tasksCompleted) {
-			System.out.print(" " + i);
+		for (String t : tasksCompleted) {
+			System.out.print(" " + t);
 		}
 		System.out.println(" )\n");
 	}

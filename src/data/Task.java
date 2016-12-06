@@ -4,34 +4,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Task implements Comparable<Task>{
-	private static int id; //Global counter for taskIds
-	private int taskId;
+	private String taskId;
 	private String taskType;
 	private List<String> skillsToPerform; //Skills to perform this task
 	private List<String> precedences; //list of taskId
-	private boolean isDone;
 	private int duration = 0;
 	
-	public Task(List<String> dp) {
+	public Task(String id, List<String> dp) {
 		taskId = id;
-		id++;
 		skillsToPerform = new ArrayList<String>();
-		this.isDone = false;
-		this.taskId = taskId;
 		precedences = dp;
 	}
 	
-	public Task() {
+	public Task(String id) {
 		taskId = id;
-		id++;
 		skillsToPerform = new ArrayList<String>();
-		this.isDone = false;
-		this.taskId = taskId;
 		precedences = new ArrayList<String>();
-	}
-	
-	public boolean isDone(){
-		return this.isDone;
 	}
 	
 	public List<String> getSkillsToPerformTask(){
@@ -69,7 +57,7 @@ public class Task implements Comparable<Task>{
 		return precedences.get(index);
 	}
 	
-	public int getTaskId() {
+	public String getTaskId() {
 		return taskId;
 	}
 	
