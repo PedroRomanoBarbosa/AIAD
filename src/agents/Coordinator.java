@@ -166,17 +166,15 @@ public class Coordinator extends Agent{
 				//TODO Verificar qual o melhor(TRUST) para fazer a tarefa
 				
 				// Send FIPA complient request protocol message
-				AID collaborator = collaborators.get(potencialCollaboratorIndex); //TODO change to best collaborator
 				ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
 				message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-				message.addReceiver(collaborator);
 				Task taskToAssign = selectedTask;
-				message.setContent("ASSIGN TASK " + taskToAssign.getTaskId());
 				
-				//Initiate request //TODO Maybe this approach can cause problems...
-				boolean assign = false;
-				boolean block = false;
-				//TODO check for valid and/or best collaborator to do task
+				//Select best candidate for this task //TODO
+				List<CollaboratorData> candidates = getCandidateColaborators(taskToAssign);
+				AID collaborator = candidates.get(0).getAID(); //TODO change to best collaborator
+				message.addReceiver(collaborator);
+				message.setContent("ASSIGN TASK " + taskToAssign.getTaskId());
 				addBehaviour(new AchieveREInitiator(getAgent(), message) {
 
 					@Override
