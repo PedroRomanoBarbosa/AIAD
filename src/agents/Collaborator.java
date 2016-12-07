@@ -26,14 +26,11 @@ import data.Task;
 
 public class Collaborator extends Agent{
 	private static final long serialVersionUID = 1l;
-	private static final long MAX_SEARCH_VALUE = 10l;
 	private String id;
 	private HashMap<String, Float> skills; // skillId -> value(probabilistic)
 	private Task currentTask; // The current task this collaborator is doing
 	private boolean ocuppied; // Whether this agent is occupied or not
-	private Coordinator projectCoordinator; //The project coordinator
 	private HashMap<CollaboratorData,AID> collaboratorData; //skillId -> value(probabilistic)
-	private TickerBehaviour periodicSearchBehaviour;
 	
 	public HashMap getSkills() {
 		return this.collaboratorData;
@@ -134,7 +131,6 @@ public class Collaborator extends Agent{
 	}
 	
 	private void registerService() {
-		System.out.println("registerService");
 		DFAgentDescription dfd = new DFAgentDescription();
   		dfd.setName(getAID());
   		ServiceDescription sd = new ServiceDescription();

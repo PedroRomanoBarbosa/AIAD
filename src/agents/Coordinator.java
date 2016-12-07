@@ -1,6 +1,7 @@
 package agents;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -39,13 +40,13 @@ public class Coordinator extends Agent{
 	private List<String> tasksCompleted; // List of Tasks Ids already done
 	private boolean projectFinished; // Boolean flag indicating the project is over
 	private double projectDuration; // The duration of the project when ended
+	private long startTime, endTime; // Date for the beginning and ending of the project
 	private Task selectedTask;
 	private int potencialCollaboratorIndex;
 	private ACLMessage searchMessage;
 	
 	// Coordinator Behaviours
-	private OneShotBehaviour createProjectBehaviour;
-	private OneShotBehaviour endProjectBehaviour;
+	private OneShotBehaviour startProjectBehaviour;
 	private OneShotBehaviour assignTaksBehaviour, sendTaskBehaviour;
 
 	@Override
@@ -65,7 +66,7 @@ public class Coordinator extends Agent{
 		*/
 		
 		// Create Behaviours
-		createProjectBehaviour();
+		createStartProjectBehaviour();
 		createAssignTaskBehaviour();
 		createSendTaskBehaviour();
 		
@@ -74,8 +75,10 @@ public class Coordinator extends Agent{
 		registerProject();
 		
 		// Add Behaviours
-		addBehaviour(createProjectBehaviour);
+		//System.out.println(Arrays.toString(collaboratorsData.toArray()));
 		searchForCollaborators();
+		
+		addBehaviour(startProjectBehaviour);
 	}
 	
 	public ArrayList<AID> getCollaboratorsAIDs(){
@@ -98,10 +101,11 @@ public class Coordinator extends Agent{
 		tasks.add(task);
 	}
 	
-	public void createProjectBehaviour(){
-		createProjectBehaviour = new OneShotBehaviour() {
+	public void createStartProjectBehaviour(){
+		startProjectBehaviour = new OneShotBehaviour() {
 			@Override
 			public void action() {
+				startTime = System.nanoTime();
 				//getAgents();
 				//addBehaviour(assignTaksBehaviour);	//TODO
 			}
@@ -163,7 +167,10 @@ public class Coordinator extends Agent{
 					}
 				} else {
 					// End project!
-					System.out.println("Project finished");
+					endTime = System.nanoTime();
+					projectDuration = endTime - startTime;
+					System.out.println("Project finished!");
+					System.out.println("Duration: " + projectDuration);
 					projectFinished = true;
 				}
 			}
@@ -298,7 +305,7 @@ public class Coordinator extends Agent{
 	  			iterateResults(results);
 	  		} else {
 	  			System.out.println("Agent " + getLocalName() + " did not find any collaborator service");
-	  			subscribe();
+	  			//subscribe();
 	  		}
 	  	}
 	  	catch (FIPAException fe) {
@@ -323,6 +330,7 @@ public class Coordinator extends Agent{
 						Float value = Float.parseFloat((String)p.getValue());
 						cd.addSkill(p.getName(), value);
 					}
+					collaboratorsData.add(cd);
 				}
 			}
 		}
