@@ -35,6 +35,9 @@ public class Collaborator extends Agent{
 	private HashMap<CollaboratorData,AID> collaboratorData; //skillId -> value(probabilistic)
 	private TickerBehaviour periodicSearchBehaviour;
 	
+	public Collaborator(){
+		skills = new HashMap<String, Float>();
+	}
 	
 	public HashMap<String, Float> getSkills() {
 		return this.skills;
@@ -58,7 +61,6 @@ public class Collaborator extends Agent{
 
 	@Override
 	protected void setup() {
-		skills = new HashMap<String, Float>();
 		ocuppied = false;
 		
 		// TO CREATE COLLABORATORS FROM GUI

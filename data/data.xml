@@ -4,11 +4,6 @@
   <project id='p01' model='fire'>
     <intervenients>
       <coordinator id='coord01' />
-      <collaborators>
-        <collaborator id='col01' />
-        <collaborator id='col02' />
-        <collaborator id='col03' />
-      </collaborators>
     </intervenients>
     <tasks>
       <task id="t01"/>

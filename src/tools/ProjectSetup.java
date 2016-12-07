@@ -187,26 +187,28 @@ public class ProjectSetup {
 		System.out.println("aqui " +collaborators.size());
 		
 		myCollaborators = parser.getCollaborators();
-		for (String coll : myCollaborators.keySet()) {
+		for (String coll_id : myCollaborators.keySet()) {
 			col = new Collaborator();
-			col.setId(coll);
+			col.setId(coll_id);
 			
-			coord.addMyCollaborators(col);
+			System.out.println(coll_id);
+			
+			coord.addMyCollaborators(col);		// check if needed
+			
+			// ADD SKILLS
+			col.setSkills(myCollaborators.get(coll_id));
+			System.out.println("my skills: "+col.getSkills());
+			System.out.println("SKILLS ADDED TO AGENT COLLABORATOR "+coll_id);
+			
 			// CREATE AGENTS COLLABORATORS
 			try {
-				collaboratorAgent = cc.acceptNewAgent(coll, col);
-				
-				// ADD SKILLS
-				col.setSkills(myCollaborators.get(coll));
-				System.out.println("my skills: "+col.getSkills());
-				System.out.println("SKILLS ADDED TO AGENT COLLABORATOR "+coll);
-				
+				collaboratorAgent = cc.acceptNewAgent(coll_id, col);
 				collaboratorAgent.start();
 			} catch (StaleProxyException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} 
-			System.out.println("AGENT COLLABORATOR "+coll+" CREATED");
+			System.out.println("AGENT COLLABORATOR "+coll_id+" CREATED");
 			
 			
 		}
