@@ -9,13 +9,18 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.AMSService;
+import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.Property;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.proto.AchieveREInitiator;
-
+import jade.proto.SubscriptionInitiator;
+import jade.util.leap.Iterator;
 import data.CollaboratorData;
 import data.Task;
 
@@ -36,6 +41,7 @@ public class Coordinator extends Agent{
 	private double projectDuration; // The duration of the project when ended
 	private Task selectedTask;
 	private int potencialCollaboratorIndex;
+	private ACLMessage searchMessage;
 	
 	// Coordinator Behaviours
 	private OneShotBehaviour createProjectBehaviour;
@@ -46,6 +52,7 @@ public class Coordinator extends Agent{
 	protected void setup() {
 		collaborators = new ArrayList<AID>();
 		tasks = new PriorityQueue<Task>();
+		tasksList = new ArrayList<>(tasks);
 		tasksCompleted = new ArrayList<String>();
 		collaboratorsData = new ArrayList<CollaboratorData>();
 		projectFinished = false;
@@ -62,8 +69,13 @@ public class Coordinator extends Agent{
 		createAssignTaskBehaviour();
 		createSendTaskBehaviour();
 		
+		buildSearchMessage();
+		
+		registerProject();
+		
 		// Add Behaviours
 		addBehaviour(createProjectBehaviour);
+		searchForCollaborators();
 	}
 	
 	public ArrayList<AID> getCollaboratorsAIDs(){
@@ -90,7 +102,7 @@ public class Coordinator extends Agent{
 		createProjectBehaviour = new OneShotBehaviour() {
 			@Override
 			public void action() {
-				getAgents();
+				//getAgents();
 				//addBehaviour(assignTaksBehaviour);	//TODO
 			}
 		};
@@ -113,6 +125,10 @@ public class Coordinator extends Agent{
 		} catch (FIPAException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public List<CollaboratorData> getCollaboratorsData() {
+		return collaboratorsData;
 	}
 	
 	private void createAssignTaskBehaviour() {
@@ -240,6 +256,122 @@ public class Coordinator extends Agent{
 
 	public void addMyCollaborators(Collaborator myCollaborator) {
 		this.myCollaborators.add(myCollaborator);
+	}
+	
+	private void registerProject() {
+  		DFAgentDescription dfd = new DFAgentDescription();
+  		dfd.setName(getAID());
+  		ServiceDescription sd = new ServiceDescription();
+  		sd.setName("AIAD project");
+  		sd.setType("project");
+  		// Agents that want to use this service need to "speak" the FIPA-SL language
+  		sd.addLanguages(FIPANames.ContentLanguage.FIPA_SL);
+  		dfd.addServices(sd);
+  		try {
+			DFService.register(this, dfd);
+		} catch (FIPAException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private boolean checkCollaboratorAlreadyInProject(AID aid) {
+		for (int i = 0; i < collaboratorsData.size(); i++) {
+			if(collaboratorsData.get(i).getAID().equals(aid)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private void searchForCollaborators() {
+	  	System.out.println("Agent " + getLocalName() + " searching for services of type \"collaborator\"");
+	  	try {
+	  		DFAgentDescription template = new DFAgentDescription();
+	  		ServiceDescription templateSd = new ServiceDescription();
+	  		templateSd.setType("collaborator");
+	  		template.addServices(templateSd);
+	  		SearchConstraints sc = new SearchConstraints();
+	  		sc.setMaxResults(-1l);
+	  		DFAgentDescription[] results = DFService.search(this, template, sc);
+	  		if (results.length > 0) {
+	  			iterateResults(results);
+	  		} else {
+	  			System.out.println("Agent " + getLocalName() + " did not find any collaborator service");
+	  			subscribe();
+	  		}
+	  	}
+	  	catch (FIPAException fe) {
+	  		fe.printStackTrace();
+	  	}
+	}
+	
+	private void iterateResults(DFAgentDescription[] results) {
+		for (int i = 0; i < results.length; ++i) {
+			DFAgentDescription dfd = results[i];
+			AID provider = dfd.getName();
+			Iterator it = dfd.getAllServices();
+			System.out.println("Agent " + provider.getName() + " providing a collaborator service");
+			while (it.hasNext()) {
+				ServiceDescription sd = (ServiceDescription) it.next();
+				if (sd.getType().equals("collaborator")) {
+					Iterator it2 = sd.getAllProperties();
+					CollaboratorData cd = new CollaboratorData(provider);
+					while(it2.hasNext()) {
+						Property p = (Property) it2.next();
+						System.out.println(p.getName() + ": " + p.getValue());
+						Float value = Float.parseFloat((String)p.getValue());
+						cd.addSkill(p.getName(), value);
+					}
+				}
+			}
+		}
+	}
+	
+	private List<Task> checkIfTasksCanBeDone() {
+		List<Task> tasksNotCovered = new ArrayList<Task>();
+		for (int i = 0; i < tasksList.size(); i++) {
+			Task task = tasksList.get(i);
+			if(!checkIfTaskCanBeDone(task)){
+				tasksNotCovered.add(task);
+			}
+		}
+		return tasksNotCovered;
+	}
+	
+	private boolean checkIfTaskCanBeDone(Task t) {
+		for (int j = 0; j < collaboratorsData.size(); j++) {
+			if(collaboratorsData.get(j).canExecuteTask(t)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private void buildSearchMessage() {
+		DFAgentDescription template = new DFAgentDescription();
+		ServiceDescription templateSd = new ServiceDescription();
+		templateSd.setType("collaborator");
+		template.addServices(templateSd);
+		SearchConstraints sc = new SearchConstraints();
+		sc.setMaxResults(-1l);
+		searchMessage = DFService.createSubscriptionMessage(this, getDefaultDF(), template, sc);
+	}
+	
+	private void subscribe() {
+		addBehaviour(new SubscriptionInitiator(this, searchMessage) {
+			protected void handleInform(ACLMessage inform) {
+	  			System.out.println("Agent " + getLocalName() + ": Notification received from DF");
+	  			try {
+					DFAgentDescription[] results = DFService.decodeNotification(inform.getContent());
+			  		if (results.length > 0) {
+			  			iterateResults(results);
+			  		}
+			  	} catch (FIPAException fe) {
+			  		fe.printStackTrace();
+			  	}
+			}
+		} );
 	}
 	
 }

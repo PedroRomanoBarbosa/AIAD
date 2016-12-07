@@ -1,20 +1,24 @@
 package data;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import jade.core.AID;
 
 public class CollaboratorData {
 	private AID aid;
 	private boolean occupied;
-	private HashMap<String,Double> skills; //skillId -> value(probabilistic)
+	private HashMap<String,Float> skills; //skillId -> value(probabilistic)
+	
+	public CollaboratorData() {
+		occupied = false;
+		skills = new HashMap<String, Float>();
+	}
 	
 	public CollaboratorData(AID id) {
 		aid = id;
 		occupied = false;
+		skills = new HashMap<String, Float>();
 	}
 	
 	public boolean hasSkills(Task t){
@@ -30,7 +34,7 @@ public class CollaboratorData {
 		return true;
 	}
 	
-	public void addSkill(String skillId, double performance){
+	public void addSkill(String skillId, Float performance){
 		this.skills.put(skillId, performance);
 	}
 	
@@ -46,6 +50,10 @@ public class CollaboratorData {
 	
 	public AID getAID() {
 		return aid;
+	}
+	
+	public void setAID(AID id) {
+		aid = id;
 	}
 	
 	public boolean isOcuppied() {
