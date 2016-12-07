@@ -35,8 +35,12 @@ public class Collaborator extends Agent{
 	private HashMap<CollaboratorData,AID> collaboratorData; //skillId -> value(probabilistic)
 	private TickerBehaviour periodicSearchBehaviour;
 	
-	public HashMap getSkills() {
-		return this.collaboratorData;
+	public Collaborator(){
+		skills = new HashMap<String, Float>();
+	}
+	
+	public HashMap<String, Float> getSkills() {
+		return this.skills;
 	}
 	
 	public Task getCurrentTask() {
@@ -50,10 +54,13 @@ public class Collaborator extends Agent{
 	public void addSkill(String skillId, Float performance) {
 		this.skills.put(skillId, performance);
 	}
+	
+	public void setSkills(HashMap<String, Float> skills) {
+		this.skills = skills;
+	}
 
 	@Override
 	protected void setup() {
-		skills = new HashMap<String, Float>();
 		ocuppied = false;
 		
 		// TO CREATE COLLABORATORS FROM GUI
@@ -65,6 +72,7 @@ public class Collaborator extends Agent{
                 skills.put((String)args[i], Float.parseFloat((String) args[i+1]));
             }
         }
+
         
         //Create Behaviours
         createFIPARequestBehaviour();

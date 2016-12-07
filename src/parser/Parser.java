@@ -145,7 +145,7 @@ public class Parser {
 							setCoordinator(nnode.getAttributes().getNamedItem("id").getNodeValue());
 							System.out.println("\t\t\tcoordinator: "+getCoordinator());
 							
-						}else if (nnode.getNodeName() == "collaborators") {
+						}/*else if (nnode.getNodeName() == "collaborators") {
 							nnodeChild = nnode.getChildNodes();
 							for (int k = 0; k < nnodeChild.getLength(); k++) {
 								nnnode = nnodeChild.item(k);
@@ -156,7 +156,7 @@ public class Parser {
 								}
 							}
 							System.out.println("\t\t\t"+nnode.getNodeName()+": "+getProjectCollaborators());
-						}else if (nnode.getNodeName() == "task") {
+						}*/else if (nnode.getNodeName() == "task") {
 							
 							// ADD TASKS
 							tasks.add(nnode.getAttributes().getNamedItem("id").getNodeValue());
