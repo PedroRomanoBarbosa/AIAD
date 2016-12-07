@@ -176,13 +176,9 @@ public class ProjectSetup {
 	
 	public static void initCollaborators(){
 		Collaborator col;
-		//ArrayList<Collaborator> myCollaborators = null;
-		ArrayList<AgentController> collaboratorsAgents;
 		AgentController collaboratorAgent;
 		ArrayList<String> collaborators = parser.getProjectCollaborators();
-		String collaborator;
 		HashMap<String,HashMap<String,Float>> myCollaborators;
-		HashMap<String,Float> myCollaborator;
 		
 		System.out.println("aqui " +collaborators.size());
 		
@@ -191,13 +187,13 @@ public class ProjectSetup {
 			col = new Collaborator();
 			col.setId(coll_id);
 			
-			System.out.println(coll_id);
+			//System.out.println(coll_id);
 			
 			coord.addMyCollaborators(col);		// check if needed
 			
 			// ADD SKILLS
 			col.setSkills(myCollaborators.get(coll_id));
-			System.out.println("my skills: "+col.getSkills());
+			//System.out.println("my skills: "+col.getSkills());
 			System.out.println("SKILLS ADDED TO AGENT COLLABORATOR "+coll_id);
 			
 			// CREATE AGENTS COLLABORATORS
@@ -212,40 +208,5 @@ public class ProjectSetup {
 			
 			
 		}
-		
-		
-		/*
-		for (int i = 0; i < collaborators.size(); i++) {
-			collaborator = collaborators.get(i);
-			col = new Collaborator();
-			col.setId(collaborator);
-			
-			coord.addMyCollaborators(col);
-			// CREATE AGENTS COLLABORATORS
-			try {
-				collaboratorAgent = cc.acceptNewAgent(collaborator, col);
-				collaboratorAgent.start();
-			} catch (StaleProxyException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} 
-			System.out.println("AGENT COLLABORATOR "+collaborator+" CREATED");
-			
-			// ADD SKILLS
-			myCollaborators = parser.getCollaborators();
-			myCollaborator = myCollaborators.get(collaborator);
-			col.setSkills(myCollaborator);
-			//System.out.println("MY SKILLS: "+col.getSkills());
-			System.out.println("SKILLS ADDED TO AGENT COLLABORATOR "+collaborator);
-		}
-		*/
-		
-
-		
-		
-		
-		
 	}
-	
-	
 }
