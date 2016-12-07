@@ -1,39 +1,41 @@
 package agents;
 
-import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
 import jade.domain.FIPANames;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.FailureException;
 import jade.domain.FIPAAgentManagement.NotUnderstoodException;
+import jade.domain.FIPAAgentManagement.Property;
 import jade.domain.FIPAAgentManagement.RefuseException;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
-
 import data.CollaboratorData;
 import data.Task;
 
 
 public class Collaborator extends Agent{
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1l;
+	private static final long MAX_SEARCH_VALUE = 10l;
 	private String id;
 	private HashMap<String, Float> skills; // skillId -> value(probabilistic)
 	private Task currentTask; // The current task this collaborator is doing
 	private boolean ocuppied; // Whether this agent is occupied or not
 	private Coordinator projectCoordinator; //The project coordinator
 	private HashMap<CollaboratorData,AID> collaboratorData; //skillId -> value(probabilistic)
+	private TickerBehaviour periodicSearchBehaviour;
 	
-	
-	
-	public HashMap getSkills(){
+	public HashMap getSkills() {
 		return this.collaboratorData;
 	}
 	
@@ -53,26 +55,21 @@ public class Collaborator extends Agent{
 	protected void setup() {
 		skills = new HashMap<String, Float>();
 		ocuppied = false;
-		createFIPARequestBehaviour();
-		
 		
 		// TO CREATE COLLABORATORS FROM GUI
 		Object[] args = getArguments();
-		String s;	
+		String s;
         if (args != null) {
-            for (int i = 0; i<args.length; i++) {
+            for (int i = 0; i < args.length-1; i+=2) {
                 s = (String) args[i];
-                //System.out.println("p" + i + ": " + s);
-                
-                String[] elements = s.split("\\s{1,}");
-                //System.out.println(Arrays.toString(elements));
-                
-                for (int i1 = 0; i1 < elements.length-1; i1+=2) {
-                	skills.put( elements[i1], Float.parseFloat((String) elements[i1+1]));
-                }
-                System.out.println(skills);
+                skills.put((String)args[i], Float.parseFloat((String) args[i+1]));
             }
         }
+        
+        //Create Behaviours
+        createFIPARequestBehaviour();
+        
+        registerService();
 	}
 	
 	/**
@@ -116,7 +113,8 @@ public class Collaborator extends Agent{
 		doWait(n * 1000);
 	}
 	
-	public CollaboratorData getCollaboratorDataByAID(AID collaboratorAID){
+	//TODO Remove this method
+	public CollaboratorData getCollaboratorDataByAID(AID collaboratorAID) {
 		CollaboratorData collaboratorData = null;
 		for (Entry<CollaboratorData, AID> entry : this.collaboratorData.entrySet()) {
             if (entry.getValue().equals(collaboratorAID)) {
@@ -134,6 +132,24 @@ public class Collaborator extends Agent{
 	public void setId(String id) {
 		this.id = id;
 	}
-
-
+	
+	private void registerService() {
+		System.out.println("registerService");
+		DFAgentDescription dfd = new DFAgentDescription();
+  		dfd.setName(getAID());
+  		ServiceDescription sd = new ServiceDescription();
+  		sd.setName(getLocalName() + " project collaborator");
+  		sd.setType("collaborator");
+  		for(Map.Entry<String, Float> entry : skills.entrySet()) {
+  			sd.addProperties(new Property(entry.getKey(), entry.getValue()));
+  		}
+  		sd.addLanguages(FIPANames.ContentLanguage.FIPA_SL);
+  		dfd.addServices(sd);
+  		try {
+			DFService.register(this, dfd);
+		} catch (FIPAException e) {
+			e.printStackTrace();
+		}
+	}
+	
 }

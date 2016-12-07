@@ -17,6 +17,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import agents.Collaborator;
 import agents.Coordinator;
+import data.CollaboratorData;
 import data.Task;
 import jade.Boot;
 import jade.core.*;
@@ -184,6 +185,7 @@ public class ProjectSetup {
 		for (int i = 0; i < collaborators.size(); i++) {
 			collaborator = collaborators.get(i);
 			col = new Collaborator();
+			col.addSkill("teste", 0.5f); //TODO remove this later
 			col.setId(collaborator);
 			
 			coord.addMyCollaborators(col);
