@@ -59,4 +59,11 @@ public class CollaboratorData {
 	public boolean isOcuppied() {
 		return occupied;
 	}
+	
+	@Override
+	public String toString() {
+		String s = "Collaborator " + aid.getName() + "\n";
+		s += skills + "\n";
+		return s;
+	}
 }

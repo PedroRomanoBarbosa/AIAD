@@ -1,21 +1,20 @@
 package agents;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Map.Entry;
+import java.util.Queue;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
 import jade.domain.FIPAAgentManagement.Property;
-import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -26,14 +25,12 @@ import data.Task;
 
 public class Collaborator extends Agent{
 	private static final long serialVersionUID = 1l;
-	private static final long MAX_SEARCH_VALUE = 10l;
 	private String id;
 	private HashMap<String, Float> skills; // skillId -> value(probabilistic)
-	private Task currentTask; // The current task this collaborator is doing
+	private String currentTask; // The current task this collaborator is doing
 	private boolean ocuppied; // Whether this agent is occupied or not
-	private Coordinator projectCoordinator; //The project coordinator
 	private HashMap<CollaboratorData,AID> collaboratorData; //skillId -> value(probabilistic)
-	private TickerBehaviour periodicSearchBehaviour;
+	private Queue<AID> requested; // Queue with the coordinators that requested this collaborators service
 	
 	public Collaborator(){
 		skills = new HashMap<String, Float>();
@@ -41,14 +38,6 @@ public class Collaborator extends Agent{
 	
 	public HashMap<String, Float> getSkills() {
 		return this.skills;
-	}
-	
-	public Task getCurrentTask() {
-		return this.currentTask;
-	}
-	
-	public void setTask(Task task) {
-		this.currentTask = task;
 	}
 	
 	public void addSkill(String skillId, Float performance) {
@@ -88,16 +77,21 @@ public class Collaborator extends Agent{
 		addBehaviour(new AchieveREResponder(this, template) {
 			
 			@Override
-			protected ACLMessage handleRequest(ACLMessage request) throws NotUnderstoodException, RefuseException {
+			protected ACLMessage handleRequest(ACLMessage request) {
 				System.out.println("Collaborator " + getLocalName() + ": REQUEST received from " + request.getSender().getName()); 
 				System.out.println("Action is " + request.getContent());
-				if(!ocuppied) {
+				String[] args = request.getContent().split(" ");
+				if(args[0].equals("REQUEST") && !ocuppied) {
 					ocuppied = true;
+					currentTask = args[1];
 					ACLMessage agree = request.createReply();
 					agree.setPerformative(ACLMessage.AGREE);
 					return agree;
 				} else {
-					throw new RefuseException("check-failed");
+					ACLMessage refuse = request.createReply();
+					refuse.setPerformative(ACLMessage.REFUSE);
+					requested.add(request.getSender());
+					return refuse;
 				}
 			}
 			
@@ -106,7 +100,9 @@ public class Collaborator extends Agent{
 				doTask();
 				System.out.println("Agent " + getLocalName() + ": Action successfully performed");
 				ACLMessage inform = request.createReply();
+				inform.setContent("DONE " + currentTask);
 				inform.setPerformative(ACLMessage.INFORM);
+				ocuppied = false;
 				return inform;
 			}
 		} );
@@ -118,7 +114,7 @@ public class Collaborator extends Agent{
 	private void doTask() {
 		Random rand = new Random();
 		int n = rand.nextInt(5) + 1;
-		doWait(n * 1000);
+		doWait(5000);
 	}
 	
 	//TODO Remove this method
@@ -142,11 +138,10 @@ public class Collaborator extends Agent{
 	}
 	
 	private void registerService() {
-		System.out.println("registerService");
 		DFAgentDescription dfd = new DFAgentDescription();
   		dfd.setName(getAID());
   		ServiceDescription sd = new ServiceDescription();
-  		sd.setName(getLocalName() + " project collaborator");
+  		sd.setName("Projects Collaborator");
   		sd.setType("collaborator");
   		for(Map.Entry<String, Float> entry : skills.entrySet()) {
   			sd.addProperties(new Property(entry.getKey(), entry.getValue()));
