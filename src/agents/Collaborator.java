@@ -10,6 +10,7 @@ import java.util.Queue;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
@@ -30,9 +31,11 @@ public class Collaborator extends Agent{
 	private String id;
 	private HashMap<String, Float> skills; // skillId -> value(probabilistic)
 	private String currentTask; // The current task this collaborator is doing
+	private AID currentCoordinator;
 	private boolean ocuppied; // Whether this agent is occupied or not
 	private HashMap<CollaboratorData,AID> collaboratorData; //skillId -> value(probabilistic)
 	private List<AID> requested; // Queue with the coordinators that requested this collaborators service
+	private WakerBehaviour doingTaskBehaviour;
 	
 	public Collaborator(){
 		skills = new HashMap<String, Float>();
@@ -73,6 +76,10 @@ public class Collaborator extends Agent{
         registerService();
 	}
 	
+	public void createGoingTaskBheaviour() {
+		
+	}
+	
 	/**
 	 * Creates a FIPA request protocol behaviour.
 	 */
@@ -91,7 +98,6 @@ public class Collaborator extends Agent{
 						ACLMessage agree = request.createReply();
 						agree.setPerformative(ACLMessage.AGREE);
 						currentTask = args[1];
-						requested.add(request.getSender()); //TODO: remove
 						return agree;
 					} else {
 						requested.add(request.getSender());
@@ -104,13 +110,23 @@ public class Collaborator extends Agent{
 			
 			@Override
 			protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
-				doTask();
-				System.out.println("Agent " + getLocalName() + ": Action successfully performed");
+				currentCoordinator = request.getSender();
+				Long time = calculateTime();
+				doingTaskBehaviour = new WakerBehaviour(getAgent(), time) {
+
+					@Override
+					protected void onWake() {
+						ocuppied = false;
+						notifyRequesters();
+						notifyCoordinator();
+						System.out.println("NOTIFIED!");
+					}
+					
+				};
+				addBehaviour(doingTaskBehaviour);
 				ACLMessage inform = request.createReply();
-				inform.setContent("DONE " + currentTask);
+				inform.setContent("ASSIGNED " + currentTask);
 				inform.setPerformative(ACLMessage.INFORM);
-				ocuppied = false;
-				notifyRequesters();
 				return inform;
 			}
 		} );
@@ -125,16 +141,24 @@ public class Collaborator extends Agent{
 		for (AID aid : requested) {
 			message.addReceiver(aid);
 		}
+		requested = new ArrayList<AID>();
+		send(message);
+	}
+	
+	public void notifyCoordinator() {
+		ACLMessage message = new ACLMessage(ACLMessage.INFORM);
+		message.setContent("DONE " + currentTask);
+		message.addReceiver(currentCoordinator);
 		send(message);
 	}
 	
 	/**
 	 * Method to simulate the collaborator performing a task.
 	 */
-	private void doTask() {
+	private Long calculateTime() {
 		Random rand = new Random();
 		int n = rand.nextInt(5) + 1;
-		doWait(5000);
+		return new Long(5000);
 	}
 	
 	//TODO Remove this method
