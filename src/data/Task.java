@@ -3,23 +3,31 @@ package data;
 import java.util.ArrayList;
 import java.util.List;
 
+import jade.core.AID;
+
 public class Task implements Comparable<Task>{
 	private String taskId;
 	private String taskType;
 	private List<String> skillsToPerform; //Skills to perform this task
 	private List<String> precedences; //list of taskId
+	private List<AID> collaborators;
+	private boolean done;
 	private int duration = 0;
 	
 	public Task(String id, List<String> dp) {
 		taskId = id;
 		skillsToPerform = new ArrayList<String>();
 		precedences = dp;
+		collaborators = new ArrayList<AID>();
+		done = false;
 	}
 	
 	public Task(String id) {
 		taskId = id;
 		skillsToPerform = new ArrayList<String>();
 		precedences = new ArrayList<String>();
+		collaborators = new ArrayList<AID>();
+		done = false;
 	}
 	
 	public List<String> getSkillsToPerformTask(){
@@ -42,6 +50,14 @@ public class Task implements Comparable<Task>{
 		return precedences;
 	}
 	
+	public boolean isDone() {
+		return done;
+	}
+	
+	public void done() {
+		done = true;
+	}
+	
 	@Override
 	public int compareTo(Task task) {
 		if(getPrecedenceNumber() > task.getPrecedenceNumber()) {
@@ -61,14 +77,31 @@ public class Task implements Comparable<Task>{
 		return taskId;
 	}
 	
+	public List<AID> getCollaborators() {
+		return collaborators;
+	}
+	
+	public void addCollaborator(AID aid) {
+		if(!collaborators.contains(aid)) {
+			collaborators.add(aid);
+		}
+	}
+	
 	@Override
 	public String toString() {
 		String s = "Task: " + taskId + " (";
-		for (int i = 0; i < precedences.size(); i++) {
-			s += " " + precedences.get(i);
+		for (int i = 0; i < skillsToPerform.size(); i++) {
+			s += " " + skillsToPerform.get(i);
 		}
 		s += " )";
 		return s;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return taskId.equals(((Task)obj).getTaskId());
+	}
+	
+	
 	
 }
