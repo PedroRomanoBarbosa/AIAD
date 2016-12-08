@@ -1,5 +1,6 @@
 package agents;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.FailureException;
 import jade.domain.FIPAAgentManagement.Property;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.introspection.Occurred;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
@@ -30,7 +32,7 @@ public class Collaborator extends Agent{
 	private String currentTask; // The current task this collaborator is doing
 	private boolean ocuppied; // Whether this agent is occupied or not
 	private HashMap<CollaboratorData,AID> collaboratorData; //skillId -> value(probabilistic)
-	private Queue<AID> requested; // Queue with the coordinators that requested this collaborators service
+	private List<AID> requested; // Queue with the coordinators that requested this collaborators service
 	
 	public HashMap getSkills() {
 		return this.collaboratorData;
@@ -43,6 +45,7 @@ public class Collaborator extends Agent{
 	@Override
 	protected void setup() {
 		skills = new HashMap<String, Float>();
+		requested = new ArrayList<AID>();
 		ocuppied = false;
 		
 		// TO CREATE COLLABORATORS FROM GUI
@@ -73,18 +76,21 @@ public class Collaborator extends Agent{
 				System.out.println("Collaborator " + getLocalName() + ": REQUEST received from " + request.getSender().getName()); 
 				System.out.println("Action is " + request.getContent());
 				String[] args = request.getContent().split(" ");
-				if(args[0].equals("REQUEST") && !ocuppied) {
-					ocuppied = true;
-					currentTask = args[1];
-					ACLMessage agree = request.createReply();
-					agree.setPerformative(ACLMessage.AGREE);
-					return agree;
-				} else {
-					ACLMessage refuse = request.createReply();
-					refuse.setPerformative(ACLMessage.REFUSE);
-					requested.add(request.getSender());
-					return refuse;
+				if(args != null && args[0].equals("REQUEST")) {
+					if(!ocuppied) {
+						ocuppied = true;
+						ACLMessage agree = request.createReply();
+						agree.setPerformative(ACLMessage.AGREE);
+						currentTask = args[1];
+						requested.add(request.getSender()); //TODO: remove
+						return agree;
+					} else {
+						requested.add(request.getSender());
+					}
 				}
+				ACLMessage refuse = request.createReply();
+				refuse.setPerformative(ACLMessage.REFUSE);
+				return refuse;
 			}
 			
 			@Override
@@ -95,9 +101,22 @@ public class Collaborator extends Agent{
 				inform.setContent("DONE " + currentTask);
 				inform.setPerformative(ACLMessage.INFORM);
 				ocuppied = false;
+				notifyRequesters();
 				return inform;
 			}
 		} );
+	}
+	
+	/**
+	 * Notifies all the requesters in the requested list that this collaborator is available.
+	 */
+	public void notifyRequesters() {
+		ACLMessage message = new ACLMessage(ACLMessage.INFORM);
+		message.setContent("AVAILABLE");
+		for (AID aid : requested) {
+			message.addReceiver(aid);
+		}
+		send(message);
 	}
 	
 	/**
