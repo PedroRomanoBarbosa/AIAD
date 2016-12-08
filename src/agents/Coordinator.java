@@ -8,6 +8,7 @@ import java.util.Queue;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.core.behaviours.WakerBehaviour;
@@ -17,11 +18,17 @@ import jade.domain.FIPAException;
 import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.NotUnderstoodException;
 import jade.domain.FIPAAgentManagement.Property;
+import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.MessageTemplate.MatchExpression;
 import jade.proto.AchieveREInitiator;
+import jade.proto.SimpleAchieveREInitiator;
+import jade.proto.SimpleAchieveREResponder;
 import jade.proto.SubscriptionInitiator;
 import jade.util.leap.Iterator;
 import data.CollaboratorData;
@@ -41,6 +48,7 @@ public class Coordinator extends Agent{
 	private List<Task> tasksList;
 	private List<String> tasksCompleted; // List of Tasks Ids already done
 	private List<String> tasksNotDone; // List of Task Ids that are not done
+	private List<AID> availableInbox;
 	private boolean projectFinished; // Boolean flag indicating the project is over
 	private double projectDuration; // The duration of the project when ended
 	private long startTime, endTime; // Date for the beginning and ending of the project
@@ -49,6 +57,7 @@ public class Coordinator extends Agent{
 	private ACLMessage searchMessage;
 	
 	// Coordinator Behaviours
+	private CyclicBehaviour recieveMessageBehaviour;
 	private WakerBehaviour startProjectBehaviour;
 	private OneShotBehaviour assignTaksBehaviour, sendTaskBehaviour;
 
@@ -58,6 +67,7 @@ public class Coordinator extends Agent{
 		tasks = new PriorityQueue<Task>();
 		tasksCompleted = new ArrayList<String>();
 		collaboratorsData = new ArrayList<CollaboratorData>();
+		availableInbox = new ArrayList<AID>();
 		projectFinished = false;
 		
 		//Tests
@@ -79,9 +89,11 @@ public class Coordinator extends Agent{
 		createStartProjectBehaviour();
 		createAssignTaskBehaviour();
 		createSendTaskBehaviour();
+		createRecieveMessageBehaviour();
 		
 		buildSearchMessage();
 		
+		addBehaviour(recieveMessageBehaviour);
 		addBehaviour(startProjectBehaviour);
 	}
 	
@@ -103,6 +115,22 @@ public class Coordinator extends Agent{
 	
 	public void addTask(Task task){
 		tasks.add(task);
+	}
+	
+	public void createRecieveMessageBehaviour() {
+		recieveMessageBehaviour = new CyclicBehaviour() {
+			
+			@Override
+			public void action() {
+				ACLMessage msg;
+				MessageTemplate pattern = MessageTemplate.and(MessageTemplate.MatchContent("AVAILABLE"), MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+			    msg = receive(pattern);
+			    if(msg != null) {
+			    	availableInbox.add(msg.getSender());
+			    }
+			    block();
+			}
+		};
 	}
 	
 	public void createStartProjectBehaviour(){
