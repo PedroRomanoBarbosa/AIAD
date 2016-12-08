@@ -14,8 +14,7 @@ import agents.Coordinator;
 import agents.Collaborator;
 import models.Interaction;
 
-
-public class FireModel extends Model {
+public class FireModel implements Model {
 	private int interaction_id = 0;
 	AID coordinatorAID;
 	AID collaboratorAID;
@@ -49,7 +48,10 @@ public class FireModel extends Model {
 	}
 	
 	@SuppressWarnings("rawtypes")
-	private double calculateTrustworthiness(){
+	public double calculateTrustworthiness(double... ParamsToCheck){
+		if (ParamsToCheck.length != 0) {
+	         throw new IllegalArgumentException();
+	    }
 		double trustworthiness = 0;
 		HashMap<Interaction, Double> database = getRatingsDatabase();
 		Iterator it = database.entrySet().iterator();
@@ -60,4 +62,5 @@ public class FireModel extends Model {
 		}
 		return trustworthiness;
 	}
+
 }
