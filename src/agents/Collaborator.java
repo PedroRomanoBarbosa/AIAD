@@ -68,7 +68,7 @@ public class Collaborator extends Agent{
 
         
         //Create Behaviours
-        createFIPARequestBehaviour();
+        addFIPARequestBehaviour();
         
         registerService();
 	}
@@ -76,7 +76,7 @@ public class Collaborator extends Agent{
 	/**
 	 * Creates a FIPA request protocol behaviour.
 	 */
-	private void createFIPARequestBehaviour() {
+	private void addFIPARequestBehaviour() {
 		MessageTemplate template = MessageTemplate.and(MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST), MessageTemplate.MatchPerformative(ACLMessage.REQUEST) );
 		addBehaviour(new AchieveREResponder(this, template) {
 			

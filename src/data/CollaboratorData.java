@@ -66,4 +66,12 @@ public class CollaboratorData {
 		s += skills + "\n";
 		return s;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return aid.equals(((CollaboratorData)obj).getAID());
+	}
+	
+	
+	
 }
