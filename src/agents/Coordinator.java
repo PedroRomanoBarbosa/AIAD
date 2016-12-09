@@ -55,15 +55,18 @@ public class Coordinator extends Agent{
 	private double projectDuration; // The duration of the project when ended
 	private long startTime, endTime; // Date for the beginning and ending of the project
 	private Task selectedTask;
-	private int potencialCollaboratorIndex;
 	private ACLMessage searchMessage;
 	
+	// Used for the main loop behaviour
 	private int tasksListIndex;
+	private int potencialCollaboratorIndex;
 	private List<Task> available;
+	private List<AID> collaboratorsForTask;
+	private boolean assigning;
 	
 	// Coordinator Behaviours
 	private CyclicBehaviour recieveMessageBehaviour, recieveTaskDoneBehaviour;
-	private WakerBehaviour startProjectBehaviour;
+	private WakerBehaviour startProjectBehaviour, newIterationBehaviour;
 	private OneShotBehaviour assignTaksBehaviour, sendTaskBehaviour, searchCollaboratorsBehaviour;
 
 	@Override
@@ -83,7 +86,7 @@ public class Coordinator extends Agent{
 		tasks.add(task);
 		
 		List<String> skills2 = new ArrayList<String>();
-		skills2.add("skill2");
+		skills2.add("skill1");
 		Task task2 = new Task("ID1");
 		task2.setSkillsToPerformTask(skills2);
 		tasks.add(task2);
@@ -98,7 +101,7 @@ public class Coordinator extends Agent{
 		
 		// Create Behaviours
 		createStartProjectBehaviour();
-		createAssignTaskBehaviour2();
+		createAssignTaskBehaviour();
 		createRecieveMessageBehaviour();
 		createRecieveTaskDoneBehaviour();
 		
@@ -167,7 +170,22 @@ public class Coordinator extends Agent{
 				msg = receive(pattern);
 			    if(msg != null) {
 			    	System.out.println(msg.getContent());
+			    	String[] args = msg.getContent().split(" ");
+			    	for (int i = 0; i < tasksList.size(); i++) {
+						if(tasksList.get(i).getTaskId().equals(args[1])) {
+							tasksList.get(i).done();
+							if(tasksList.isEmpty()) { //TODO
+								projectDuration = System.nanoTime() - startTime;
+								System.out.println("Project finished!");
+								System.out.println("Duration: " + projectDuration);
+								projectFinished = true;
+							}
+						}
+					}
 			    	updateCollaboratorAvailability(msg.getSender(), false);
+			    	if(!assigning) {
+			    		startNewIterationBehaviour(0l);
+			    	}
 			    } else {
 			    	block();
 			    }
@@ -197,7 +215,7 @@ public class Coordinator extends Agent{
 				subscribe();
 				System.out.println("Started Project!");
 				startTime = System.nanoTime();
-				addBehaviour(assignTaksBehaviour);	
+				startNewIterationBehaviour(0l);
 			}
 			
 		};
@@ -229,65 +247,68 @@ public class Coordinator extends Agent{
 		return collaboratorsData;
 	}
 	
+	private void startNewIterationBehaviour(Long time) {
+		newIterationBehaviour = new WakerBehaviour(this, time) {
+			
+			@Override
+			protected void onWake() {
+				available = getAvailableTasks();
+				System.out.println("AVAILABLE TASKS: \n" + available);
+				if(available.size() > 0) {
+					assigning = true;
+					tasksListIndex = 0;
+					potencialCollaboratorIndex = 0;
+					addBehaviour(assignTaksBehaviour);
+				}
+			}
+		};
+		addBehaviour(newIterationBehaviour);
+	}
+	
 	private void createAssignTaskBehaviour() {
 		assignTaksBehaviour = new OneShotBehaviour() {
 			
 			@Override
 			public void action() {
-				//printState();
-				boolean assign = true;
+				//TODO For each available task choose the best collaborator(TRUST)
 				
-				// If the task queue still has tasks
-				if(!tasks.isEmpty()) {
-					Task task = tasks.poll();
-					
-					// Check if task precedences are all done or not
-					for(int i = 0; (i < task.getPrecedenceNumber()) && (assign == true); i++) {
-						String id = task.getPrecedence(i);
-						
-						// If there is at least one precedence to be done do not assign this task and end loop
-						if(!tasksCompleted.contains(id)){
-							assign = false;
-							
-							// Push this task to the end of the tasks queue
-							tasks.add(task);
-						}
+				//TODO Assign to that collaborator and wait for callback
+				System.out.println("SIZE: " + available.size());
+				System.out.println("TASK INDEX: " + tasksListIndex);
+				System.out.println("COLLABORATOR INDEX: " + potencialCollaboratorIndex);
+				System.out.println();
+				if(tasksListIndex < available.size()) {
+					Task selectedTask = available.get(tasksListIndex);
+					collaboratorsForTask = available.get(tasksListIndex).getCollaborators();
+					if(potencialCollaboratorIndex < available.get(tasksListIndex).getCollaborators().size()) {
+						AID collaborator = available.get(tasksListIndex).getCollaborators().get(potencialCollaboratorIndex); //TODO Change
+						ACLMessage message = prepareRequestMessage(selectedTask);
+						sendRequestMessage(collaborator, message, selectedTask);
+					} else {
+						potencialCollaboratorIndex = 0;
+						tasksListIndex++;
 					}
-					
-					// If there are no precedences to be done in this task try to assign it
-					if(assign) {
-						selectedTask = task;
-						addBehaviour(sendTaskBehaviour);
-					}
+				} else {
+					System.out.println("END OF AVAILABLE TASKS");
+					assigning = false;
 				}
 			}
 		};
 	}
 	
-	private void createAssignTaskBehaviour2() {
-		assignTaksBehaviour = new OneShotBehaviour() {
-			
-			@Override
-			public void action() {
-				available = getAvailableTasks();
-				System.out.println("AVAILABLE TASKS" + available);
-				
-				//TODO For each available task choose the best collaborator(TRUST)
-				
-				//TODO Assign to that collaborator and wait for callback
-				
-				Task selectedTask = available.get(tasksListIndex);
-				AID collaborator = available.get(tasksListIndex).getCollaborators().get(0); //TODO Change
-				ACLMessage message = prepareRequestMessage(selectedTask);
-				sendRequestMessage(collaborator, message, selectedTask);
+	private Task getTaskById(String id) {
+		for (int i = 0; i < tasksList.size(); i++) {
+			if(tasksList.get(i).getTaskId().equals(id)) {
+				return tasksList.get(i);
 			}
-		};
+		}
+		return null;
 	}
 	
 	private List<Task> getAvailableTasks() {
 		List<Task> availableTasks = new ArrayList<Task>();
 		for (Task task : tasksList) {
-			if(!task.isDone() && !hasPrecedentsLeft(task)) {
+			if(!task.isDone() && !task.isAssigned() && !hasPrecedentsLeft(task) && hasCollaborators(task)) {
 				availableTasks.add(task);
 			}
 		}
@@ -307,6 +328,20 @@ public class Coordinator extends Agent{
 		return false;
 	}
 	
+	public boolean hasCollaborators(Task t) {
+		for (int i = 0; i < t.getCollaborators().size(); i++) {
+			AID collaboratorAID = t.getCollaborators().get(i);
+			for (int j = 0; j < collaboratorsData.size(); j++) {
+				if(collaboratorsData.get(j).getAID().equals(collaboratorAID)) {
+					if(!collaboratorsData.get(j).isOcuppied()) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
 	private void sendRequestMessage(AID aid, ACLMessage message, Task task) {
 		message.addReceiver(aid);
 		addBehaviour(new AchieveREInitiator(this, message) {
@@ -315,29 +350,27 @@ public class Coordinator extends Agent{
 			protected void handleInform(ACLMessage inform) {
 				System.out.println("Agent " + inform.getSender().getName() + " " + inform.getContent());
 				String[] args = inform.getContent().split(" ");
-				if(args[0].equals("DONE") && args[1].equals(task.getTaskId())) {
-					task.done();
-					tasksList.remove(task); //TODO maybe other implementation
-					if(tasksList.isEmpty()) {
-						tasksList.remove(task);
-						projectDuration = System.nanoTime() - startTime;
-						System.out.println("Project finished!");
-						System.out.println("Duration: " + projectDuration);
-						projectFinished = true;
-					}
+				if(args[0].equals("ASSIGNED") && args[1].equals(task.getTaskId())) {
+					task.assign();
+					tasksListIndex++;
+					addBehaviour(assignTaksBehaviour);
 				}
 			}
 			
 			@Override
 			protected void handleAgree(ACLMessage agree) {
 				System.out.println("Agent "+ agree.getSender().getName() + " agreed to perform task " + task.getTaskId());
-				addBehaviour(assignTaksBehaviour);
 			}
 
 			@Override
 			protected void handleRefuse(ACLMessage refuse) {
 				System.out.println("Agent " + refuse.getSender().getName() + " is ocuppied");
-				potencialCollaboratorIndex = 0; //TODO change this to the second best available
+				potencialCollaboratorIndex++;
+				if(potencialCollaboratorIndex >= collaboratorsForTask.size()) {
+					tasksListIndex++;
+				}
+				updateCollaboratorAvailability(refuse.getSender(), true);
+				addBehaviour(assignTaksBehaviour);
 			}
 			
 		});
@@ -390,15 +423,6 @@ public class Coordinator extends Agent{
 		this.myCollaborators.add(myCollaborator);
 	}
 	
-	private boolean checkCollaboratorAlreadyInProject(AID aid) {
-		for (int i = 0; i < collaboratorsData.size(); i++) {
-			if(collaboratorsData.get(i).getAID().equals(aid)){
-				return true;
-			}
-		}
-		return false;
-	}
-	
 	private List<CollaboratorData> getDFCollaborators() {
 	  	List<CollaboratorData> collaborators = new ArrayList<CollaboratorData>();
 	  	try {
@@ -432,27 +456,6 @@ public class Coordinator extends Agent{
 	  		fe.printStackTrace();
 	  	}
 	  	return collaborators;
-	}
-	
-	private List<Task> checkIfTasksCanBeDone() {
-		List<Task> tasksNotCovered = new ArrayList<Task>();
-		tasksList = new ArrayList<Task>(tasks);
-		for (int i = 0; i < tasksList.size(); i++) {
-			Task task = tasksList.get(i);
-			if(!checkIfTaskCanBeDone(task)){
-				tasksNotCovered.add(task);
-			}
-		}
-		return tasksNotCovered;
-	}
-	
-	private boolean checkIfTaskCanBeDone(Task t) {
-		for (int j = 0; j < collaboratorsData.size(); j++) {
-			if(collaboratorsData.get(j).canExecuteTask(t)) {
-				return true;
-			}
-		}
-		return false;
 	}
 	
 	private void buildSearchMessage() {
