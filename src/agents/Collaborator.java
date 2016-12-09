@@ -100,7 +100,9 @@ public class Collaborator extends Agent{
 						currentTask = args[1];
 						return agree;
 					} else {
-						requested.add(request.getSender());
+						if(!currentCoordinator.equals(request.getSender())) {
+							requested.add(request.getSender());
+						}
 					}
 				}
 				ACLMessage refuse = request.createReply();

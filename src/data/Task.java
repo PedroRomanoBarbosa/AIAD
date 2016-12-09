@@ -12,6 +12,7 @@ public class Task implements Comparable<Task>{
 	private List<String> precedences; //list of taskId
 	private List<AID> collaborators;
 	private boolean done;
+	private boolean assigned;
 	private int duration = 0;
 	
 	public Task(String id, List<String> dp) {
@@ -20,6 +21,7 @@ public class Task implements Comparable<Task>{
 		precedences = dp;
 		collaborators = new ArrayList<AID>();
 		done = false;
+		assigned = false;
 	}
 	
 	public Task(String id) {
@@ -28,6 +30,7 @@ public class Task implements Comparable<Task>{
 		precedences = new ArrayList<String>();
 		collaborators = new ArrayList<AID>();
 		done = false;
+		assigned = false;
 	}
 	
 	public List<String> getSkillsToPerformTask(){
@@ -56,6 +59,14 @@ public class Task implements Comparable<Task>{
 	
 	public void done() {
 		done = true;
+	}
+	
+	public void assign() {
+		assigned = true;
+	}
+	
+	public boolean isAssigned() {
+		return assigned;
 	}
 	
 	@Override
