@@ -1,5 +1,7 @@
 package data;
 
+import jade.core.AID;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -81,7 +83,5 @@ public class CollaboratorData {
 	public boolean equals(Object obj) {
 		return aid.equals(((CollaboratorData)obj).getAID());
 	}
-	
-	
 	
 }

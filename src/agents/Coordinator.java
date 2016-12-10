@@ -1,38 +1,27 @@
 package agents;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Queue;
 
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
-import jade.core.behaviours.TickerBehaviour;
 import jade.core.behaviours.WakerBehaviour;
-import jade.core.messaging.MatchAllFilter;
-import jade.domain.AMSService;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
-import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
 import jade.domain.FIPAAgentManagement.Property;
-import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.MessageTemplate.MatchExpression;
 import jade.proto.AchieveREInitiator;
-import jade.proto.SimpleAchieveREInitiator;
-import jade.proto.SimpleAchieveREResponder;
 import jade.proto.SubscriptionInitiator;
 import jade.util.leap.Iterator;
+
 import data.CollaboratorData;
 import data.Task;
 
@@ -44,12 +33,9 @@ public class Coordinator extends Agent{
 	// Project Meta Information
 	private Model chosenModel; // The trust model chosen
 	private ArrayList<Collaborator> myCollaborators = new ArrayList<Collaborator>();
-	private List<AID> collaborators; // All the collaborators AIDs //TODO delete this
 	private List<CollaboratorData> collaboratorsData; //
-	private Queue<Task> tasks; // A task Queue ordered by crescent number of precedences
+	//private List<CollaboratorData> collaboratorsData; // All the collaborators AIDs
 	private List<Task> tasksList;
-	private List<String> tasksCompleted; // List of Tasks Ids already done
-	private List<String> tasksNotDone; // List of Task Ids that are not done
 	private boolean projectFinished; // Boolean flag indicating the project is over
 	private long projectDuration; // The duration of the project when ended
 	private long startTime; // Date for the beginning and ending of the project
@@ -69,9 +55,7 @@ public class Coordinator extends Agent{
 
 	@Override
 	protected void setup() {
-		collaborators = new ArrayList<AID>();
-		tasks = new PriorityQueue<Task>();
-		tasksCompleted = new ArrayList<String>();
+		tasksList = new ArrayList<Task>();
 		collaboratorsData = new ArrayList<CollaboratorData>();
 		projectFinished = false;
 		
@@ -80,21 +64,15 @@ public class Coordinator extends Agent{
 		skills.add("skill1");
 		Task task = new Task("ID0");
 		task.setSkillsToPerformTask(skills);
-		tasks.add(task);
+		tasksList.add(task);
 		
 		List<String> skills2 = new ArrayList<String>();
 		skills2.add("skill1");
 		Task task2 = new Task("ID1");
 		task2.setSkillsToPerformTask(skills2);
-		tasks.add(task2);
+		tasksList.add(task2);
 		//tasks.add(new Task("ID1"));
 		//tasks.add(new Task("ID2"));
-		
-		tasksList = new ArrayList<Task>(tasks);
-		tasksNotDone = new ArrayList<String>();
-		for (int i = 0; i < tasksList.size(); i++) {
-			tasksNotDone.add(tasksList.get(i).getTaskId());
-		}
 		
 		// Create Behaviours
 		createStartProjectBehaviour();
@@ -109,10 +87,6 @@ public class Coordinator extends Agent{
 		addBehaviour(startProjectBehaviour);
 	}
 	
-	public ArrayList<AID> getCollaboratorsAIDs(){
-		return (ArrayList<AID>) this.collaborators;
-	}
-	
 	public void setModel(Model model){
 		this.chosenModel = model;
 	}
@@ -121,12 +95,8 @@ public class Coordinator extends Agent{
 		return projectFinished;
 	}
 	
-	public void addCollaborator(AID collaboratorAID){
-		collaborators.add(collaboratorAID);
-	}
-	
 	public void addTask(Task task){
-		tasks.add(task);
+		tasksList.add(task);
 	}
 	
 	/**
@@ -419,6 +389,15 @@ public class Coordinator extends Agent{
 	
 	public List<CollaboratorData> getCollaboratorData() {
 		return collaboratorsData;
+	}
+	
+	public CollaboratorData getCollaboratorDataByAID(AID aid) {
+		for (int i = 0; i < collaboratorsData.size(); i++) {
+			if(collaboratorsData.get(i).equals(aid)) {
+				return collaboratorsData.get(i);
+			}
+		}
+		return null;
 	}
 	
 	public ArrayList<Collaborator> getMyCollaborators() {

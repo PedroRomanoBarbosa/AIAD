@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Map.Entry;
-import java.util.Queue;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -18,12 +17,11 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.FailureException;
 import jade.domain.FIPAAgentManagement.Property;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
-import jade.domain.introspection.Occurred;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
+
 import data.CollaboratorData;
-import data.Task;
 
 
 public class Collaborator extends Agent{
@@ -69,15 +67,10 @@ public class Collaborator extends Agent{
             }
         }
 
-        
         //Create Behaviours
         addFIPARequestBehaviour();
         
         registerService();
-	}
-	
-	public void createGoingTaskBheaviour() {
-		
 	}
 	
 	/**

@@ -1,6 +1,6 @@
 package models;
 
-public abstract class Model {
-	public Model() {
-	}
+public interface Model {
+	double calculateTrustworthiness(double... ParamsToCheck);
 }
+
