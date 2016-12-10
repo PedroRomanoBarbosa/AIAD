@@ -50,11 +50,9 @@ public class Coordinator extends Agent{
 	private List<Task> tasksList;
 	private List<String> tasksCompleted; // List of Tasks Ids already done
 	private List<String> tasksNotDone; // List of Task Ids that are not done
-	private List<AID> availableInbox;
 	private boolean projectFinished; // Boolean flag indicating the project is over
-	private double projectDuration; // The duration of the project when ended
-	private long startTime, endTime; // Date for the beginning and ending of the project
-	private Task selectedTask;
+	private long projectDuration; // The duration of the project when ended
+	private long startTime; // Date for the beginning and ending of the project
 	private ACLMessage searchMessage;
 	
 	// Used for the main loop behaviour
@@ -67,7 +65,7 @@ public class Coordinator extends Agent{
 	// Coordinator Behaviours
 	private CyclicBehaviour recieveMessageBehaviour, recieveTaskDoneBehaviour;
 	private WakerBehaviour startProjectBehaviour, newIterationBehaviour;
-	private OneShotBehaviour assignTaksBehaviour, sendTaskBehaviour, searchCollaboratorsBehaviour;
+	private OneShotBehaviour assignTaksBehaviour;
 
 	@Override
 	protected void setup() {
@@ -75,7 +73,6 @@ public class Coordinator extends Agent{
 		tasks = new PriorityQueue<Task>();
 		tasksCompleted = new ArrayList<String>();
 		collaboratorsData = new ArrayList<CollaboratorData>();
-		availableInbox = new ArrayList<AID>();
 		projectFinished = false;
 		
 		//Tests
@@ -132,6 +129,11 @@ public class Coordinator extends Agent{
 		tasks.add(task);
 	}
 	
+	/**
+	 * Method that receives messages from all the collaborators that were requested
+	 * to do a certain task but weren't available that moment confirming that they are
+	 * available.
+	 */
 	private void createRecieveMessageBehaviour() {
 		recieveMessageBehaviour = new CyclicBehaviour() {
 			
@@ -142,6 +144,9 @@ public class Coordinator extends Agent{
 			    msg = receive(pattern);
 			    if(msg != null) {
 			    	updateCollaboratorAvailability(msg.getSender(), false);
+			    	if(!assigning) {
+			    		startNewIterationBehaviour(0l);
+			    	}
 			    } else {
 			    	block();
 			    }
@@ -149,6 +154,10 @@ public class Coordinator extends Agent{
 		};
 	}
 	
+	/**
+	 * Method that receives messages from all collaborators that are doing a task
+	 * confirming that the task is already done.
+	 */
 	private void createRecieveTaskDoneBehaviour() {
 		recieveTaskDoneBehaviour = new CyclicBehaviour() {
 			
@@ -174,10 +183,10 @@ public class Coordinator extends Agent{
 			    	for (int i = 0; i < tasksList.size(); i++) {
 						if(tasksList.get(i).getTaskId().equals(args[1])) {
 							tasksList.get(i).done();
-							if(tasksList.isEmpty()) { //TODO
+							if(checkIfAllTasksDone()) {
 								projectDuration = System.nanoTime() - startTime;
 								System.out.println("Project finished!");
-								System.out.println("Duration: " + projectDuration);
+								System.out.println("Duration: " + projectDuration/1000000000 + " seconds");
 								projectFinished = true;
 							}
 						}
@@ -247,6 +256,15 @@ public class Coordinator extends Agent{
 		return collaboratorsData;
 	}
 	
+	private boolean checkIfAllTasksDone() {
+		for (int i = 0; i < tasksList.size(); i++) {
+			if(!tasksList.get(i).isDone()) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	private void startNewIterationBehaviour(Long time) {
 		newIterationBehaviour = new WakerBehaviour(this, time) {
 			
@@ -265,6 +283,9 @@ public class Coordinator extends Agent{
 		addBehaviour(newIterationBehaviour);
 	}
 	
+	/**
+	 * Main assignment loop method.
+	 */
 	private void createAssignTaskBehaviour() {
 		assignTaksBehaviour = new OneShotBehaviour() {
 			
@@ -272,11 +293,12 @@ public class Coordinator extends Agent{
 			public void action() {
 				//TODO For each available task choose the best collaborator(TRUST)
 				
-				//TODO Assign to that collaborator and wait for callback
 				System.out.println("SIZE: " + available.size());
 				System.out.println("TASK INDEX: " + tasksListIndex);
 				System.out.println("COLLABORATOR INDEX: " + potencialCollaboratorIndex);
 				System.out.println();
+				
+				// While there are tasks available in the available list select collaborator candidates
 				if(tasksListIndex < available.size()) {
 					Task selectedTask = available.get(tasksListIndex);
 					collaboratorsForTask = available.get(tasksListIndex).getCollaborators();
@@ -289,20 +311,18 @@ public class Coordinator extends Agent{
 						tasksListIndex++;
 					}
 				} else {
-					System.out.println("END OF AVAILABLE TASKS");
-					assigning = false;
+					/* If at the end of assignment there are new tasks to be done(new available 
+					collaborators or tasks finished while assigning) then repeat process */
+					available = getAvailableTasks();
+					if(available.size() != 0) {
+						addBehaviour(assignTaksBehaviour);
+					} else {
+						System.out.println("END OF AVAILABLE TASKS");
+						assigning = false;
+					}
 				}
 			}
 		};
-	}
-	
-	private Task getTaskById(String id) {
-		for (int i = 0; i < tasksList.size(); i++) {
-			if(tasksList.get(i).getTaskId().equals(id)) {
-				return tasksList.get(i);
-			}
-		}
-		return null;
 	}
 	
 	private List<Task> getAvailableTasks() {
@@ -401,20 +421,6 @@ public class Coordinator extends Agent{
 		return collaboratorsData;
 	}
 	
-	public void printState() {
-		System.out.println("#### STATE ####");
-		List<Task> l = new ArrayList<Task>(tasks);
-		System.out.println("Number of tasks: " + l.size());
-		for (Task task : l) {
-			System.out.println(task);
-		}
-		System.out.print("TASKS DONE: (");
-		for (String t : tasksCompleted) {
-			System.out.print(" " + t);
-		}
-		System.out.println(" )\n");
-	}
-
 	public ArrayList<Collaborator> getMyCollaborators() {
 		return myCollaborators;
 	}
@@ -489,6 +495,9 @@ public class Coordinator extends Agent{
 										cd.addSkill(p.getName(), value);
 									}
 									addToContactList(cd);
+									if(!assigning) {
+										startNewIterationBehaviour(0l);
+									}
 								}
 							}
 						}
