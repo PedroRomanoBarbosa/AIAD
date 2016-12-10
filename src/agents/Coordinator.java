@@ -1,24 +1,36 @@
 package agents;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.TickerBehaviour;
+import jade.core.behaviours.WakerBehaviour;
+import jade.core.messaging.MatchAllFilter;
 import jade.domain.AMSService;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.NotUnderstoodException;
 import jade.domain.FIPAAgentManagement.Property;
+import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.MessageTemplate.MatchExpression;
 import jade.proto.AchieveREInitiator;
+import jade.proto.SimpleAchieveREInitiator;
+import jade.proto.SimpleAchieveREResponder;
 import jade.proto.SubscriptionInitiator;
 import jade.util.leap.Iterator;
 import data.CollaboratorData;
@@ -33,49 +45,71 @@ public class Coordinator extends Agent{
 	private Model chosenModel; // The trust model chosen
 	private ArrayList<Collaborator> myCollaborators = new ArrayList<Collaborator>();
 	private List<AID> collaborators; // All the collaborators AIDs //TODO delete this
-	private List<CollaboratorData> collaboratorsData;
+	private List<CollaboratorData> collaboratorsData; //
 	private Queue<Task> tasks; // A task Queue ordered by crescent number of precedences
 	private List<Task> tasksList;
 	private List<String> tasksCompleted; // List of Tasks Ids already done
+	private List<String> tasksNotDone; // List of Task Ids that are not done
+	private List<AID> availableInbox;
 	private boolean projectFinished; // Boolean flag indicating the project is over
 	private double projectDuration; // The duration of the project when ended
+	private long startTime, endTime; // Date for the beginning and ending of the project
 	private Task selectedTask;
-	private int potencialCollaboratorIndex;
 	private ACLMessage searchMessage;
 	
+	// Used for the main loop behaviour
+	private int tasksListIndex;
+	private int potencialCollaboratorIndex;
+	private List<Task> available;
+	private List<AID> collaboratorsForTask;
+	private boolean assigning;
+	
 	// Coordinator Behaviours
-	private OneShotBehaviour createProjectBehaviour;
-	private OneShotBehaviour endProjectBehaviour;
-	private OneShotBehaviour assignTaksBehaviour, sendTaskBehaviour;
+	private CyclicBehaviour recieveMessageBehaviour, recieveTaskDoneBehaviour;
+	private WakerBehaviour startProjectBehaviour, newIterationBehaviour;
+	private OneShotBehaviour assignTaksBehaviour, sendTaskBehaviour, searchCollaboratorsBehaviour;
 
 	@Override
 	protected void setup() {
 		collaborators = new ArrayList<AID>();
 		tasks = new PriorityQueue<Task>();
-		tasksList = new ArrayList<>(tasks);
 		tasksCompleted = new ArrayList<String>();
 		collaboratorsData = new ArrayList<CollaboratorData>();
+		availableInbox = new ArrayList<AID>();
 		projectFinished = false;
 		
 		//Tests
-		/*
-		tasks.add(new Task("ID0"));
-		tasks.add(new Task("ID1"));
-		tasks.add(new Task("ID2"));
-		*/
+		List<String> skills = new ArrayList<String>();
+		skills.add("skill1");
+		Task task = new Task("ID0");
+		task.setSkillsToPerformTask(skills);
+		tasks.add(task);
+		
+		List<String> skills2 = new ArrayList<String>();
+		skills2.add("skill1");
+		Task task2 = new Task("ID1");
+		task2.setSkillsToPerformTask(skills2);
+		tasks.add(task2);
+		//tasks.add(new Task("ID1"));
+		//tasks.add(new Task("ID2"));
+		
+		tasksList = new ArrayList<Task>(tasks);
+		tasksNotDone = new ArrayList<String>();
+		for (int i = 0; i < tasksList.size(); i++) {
+			tasksNotDone.add(tasksList.get(i).getTaskId());
+		}
 		
 		// Create Behaviours
-		createProjectBehaviour();
+		createStartProjectBehaviour();
 		createAssignTaskBehaviour();
-		createSendTaskBehaviour();
+		createRecieveMessageBehaviour();
+		createRecieveTaskDoneBehaviour();
 		
 		buildSearchMessage();
 		
-		registerProject();
-		
-		// Add Behaviours
-		addBehaviour(createProjectBehaviour);
-		searchForCollaborators();
+		addBehaviour(recieveMessageBehaviour);
+		addBehaviour(recieveTaskDoneBehaviour);
+		addBehaviour(startProjectBehaviour);
 	}
 	
 	public ArrayList<AID> getCollaboratorsAIDs(){
@@ -98,32 +132,114 @@ public class Coordinator extends Agent{
 		tasks.add(task);
 	}
 	
-	public void createProjectBehaviour(){
-		createProjectBehaviour = new OneShotBehaviour() {
+	private void createRecieveMessageBehaviour() {
+		recieveMessageBehaviour = new CyclicBehaviour() {
+			
 			@Override
 			public void action() {
-				//getAgents();
-				//addBehaviour(assignTaksBehaviour);	//TODO
+				ACLMessage msg;
+				MessageTemplate pattern = MessageTemplate.and(MessageTemplate.MatchContent("AVAILABLE"), MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+			    msg = receive(pattern);
+			    if(msg != null) {
+			    	updateCollaboratorAvailability(msg.getSender(), false);
+			    } else {
+			    	block();
+			    }
 			}
 		};
 	}
 	
-	// TEST METHOD
-	private void getAgents() {
-		try {
-			SearchConstraints c = new SearchConstraints();
-	        c.setMaxResults(-1l);
-			AMSAgentDescription[] agents = AMSService.search(this, new AMSAgentDescription(), c);
-			System.out.println("All Collaborator agents:");
-			for (AMSAgentDescription amsAgentDescription : agents) {
-				
-				if(amsAgentDescription.getName().getLocalName().equals("Lulu")){
-					System.out.println(amsAgentDescription.getName());
-					//collaborators.add(amsAgentDescription.getName());		//TODO
+	private void createRecieveTaskDoneBehaviour() {
+		recieveTaskDoneBehaviour = new CyclicBehaviour() {
+			
+			@Override
+			public void action() {
+				ACLMessage msg;
+				MessageTemplate pattern = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM), new MessageTemplate(new MatchExpression() {
+
+					@Override
+					public boolean match(ACLMessage m) {
+						String[] args = m.getContent().split(" ");
+						if(args[0].equals("DONE")) {
+							return true;
+						} else {
+							return false;
+						}
+					}
+				}));
+				msg = receive(pattern);
+			    if(msg != null) {
+			    	System.out.println(msg.getContent());
+			    	String[] args = msg.getContent().split(" ");
+			    	for (int i = 0; i < tasksList.size(); i++) {
+						if(tasksList.get(i).getTaskId().equals(args[1])) {
+							tasksList.get(i).done();
+							if(tasksList.isEmpty()) { //TODO
+								projectDuration = System.nanoTime() - startTime;
+								System.out.println("Project finished!");
+								System.out.println("Duration: " + projectDuration);
+								projectFinished = true;
+							}
+						}
+					}
+			    	updateCollaboratorAvailability(msg.getSender(), false);
+			    	if(!assigning) {
+			    		startNewIterationBehaviour(0l);
+			    	}
+			    } else {
+			    	block();
+			    }
+			}
+		};
+	}
+	
+	private void updateCollaboratorAvailability(AID aid, boolean occupied) {
+		for (int i = 0; i < collaboratorsData.size(); i++) {
+			if(collaboratorsData.get(i).getAID().equals(aid)) {
+				collaboratorsData.get(i).setAvailability(occupied);
+			}
+		}
+	}
+	
+	private void createStartProjectBehaviour() {
+		startProjectBehaviour = new WakerBehaviour(this, 5000l) {
+
+			@Override
+			protected void onWake() {
+				System.out.println("Searching for collaborators...");
+				List<CollaboratorData> colaborators = getDFCollaborators();
+				for (CollaboratorData collaborator : colaborators) {
+					addToContactList(collaborator);
+				}
+				printContactsList();
+				subscribe();
+				System.out.println("Started Project!");
+				startTime = System.nanoTime();
+				startNewIterationBehaviour(0l);
+			}
+			
+		};
+	}
+	
+	private void printContactsList() {
+		System.out.println("ALL CONTACTS: \n" + collaboratorsData);
+		System.out.println("TASKS:");
+		for (Task task : tasksList) {
+			System.out.println(task + ":");
+			for (AID aid : task.getCollaborators()) {
+				System.out.println("\t - " + aid.getName());
+			}
+		}
+	}
+	
+	private void addToContactList(CollaboratorData collaborator) {
+		for (Task t : tasksList) {
+			if(collaborator.canExecuteTask(t)) {
+				t.addCollaborator(collaborator.getAID());
+				if(!collaboratorsData.contains(collaborator)) {
+					collaboratorsData.add(collaborator);
 				}
 			}
-		} catch (FIPAException e) {
-			e.printStackTrace();
 		}
 	}
 	
@@ -131,102 +247,151 @@ public class Coordinator extends Agent{
 		return collaboratorsData;
 	}
 	
+	private void startNewIterationBehaviour(Long time) {
+		newIterationBehaviour = new WakerBehaviour(this, time) {
+			
+			@Override
+			protected void onWake() {
+				available = getAvailableTasks();
+				System.out.println("AVAILABLE TASKS: \n" + available);
+				if(available.size() > 0) {
+					assigning = true;
+					tasksListIndex = 0;
+					potencialCollaboratorIndex = 0;
+					addBehaviour(assignTaksBehaviour);
+				}
+			}
+		};
+		addBehaviour(newIterationBehaviour);
+	}
+	
 	private void createAssignTaskBehaviour() {
 		assignTaksBehaviour = new OneShotBehaviour() {
 			
 			@Override
 			public void action() {
-				//printState();
-				boolean assign = true;
+				//TODO For each available task choose the best collaborator(TRUST)
 				
-				// If the task queue still has tasks
-				if(!tasks.isEmpty()) {
-					Task task = tasks.poll();
-					
-					// Check if task precedences are all done or not
-					for(int i = 0; (i < task.getPrecedenceNumber()) && (assign == true); i++) {
-						String id = task.getPrecedence(i);
-						
-						// If there is at least one precedence to be done do not assign this task and end loop
-						if(!tasksCompleted.contains(id)){
-							assign = false;
-							
-							// Push this task to the end of the tasks queue
-							tasks.add(task);
-						}
-					}
-					
-					// If there are no precedences to be done in this task try to assign it
-					if(assign) {
-						selectedTask = task;
-						addBehaviour(sendTaskBehaviour);
+				//TODO Assign to that collaborator and wait for callback
+				System.out.println("SIZE: " + available.size());
+				System.out.println("TASK INDEX: " + tasksListIndex);
+				System.out.println("COLLABORATOR INDEX: " + potencialCollaboratorIndex);
+				System.out.println();
+				if(tasksListIndex < available.size()) {
+					Task selectedTask = available.get(tasksListIndex);
+					collaboratorsForTask = available.get(tasksListIndex).getCollaborators();
+					if(potencialCollaboratorIndex < available.get(tasksListIndex).getCollaborators().size()) {
+						AID collaborator = available.get(tasksListIndex).getCollaborators().get(potencialCollaboratorIndex); //TODO Change
+						ACLMessage message = prepareRequestMessage(selectedTask);
+						sendRequestMessage(collaborator, message, selectedTask);
+					} else {
+						potencialCollaboratorIndex = 0;
+						tasksListIndex++;
 					}
 				} else {
-					// End project!
-					System.out.println("Project finished");
-					projectFinished = true;
+					System.out.println("END OF AVAILABLE TASKS");
+					assigning = false;
 				}
 			}
 		};
 	}
 	
-	private void createSendTaskBehaviour() {
-		sendTaskBehaviour = new OneShotBehaviour() {
-			
-			@Override
-			public void action() {
-				//TODO se estiverem todos ocupados esperar
-				
-				//TODO Verificar se o colaborador pode efetuar a tarefa
-				
-				//TODO Verificar qual o melhor(TRUST) para fazer a tarefa
-				
-				// Send FIPA complient request protocol message
-				ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
-				message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-				Task taskToAssign = selectedTask;
-				
-				//Select best candidate for this task //TODO
-				List<CollaboratorData> candidates = getCandidateColaborators(taskToAssign);
-				AID collaborator = candidates.get(0).getAID(); //TODO change to best collaborator
-				message.addReceiver(collaborator);
-				message.setContent("ASSIGN TASK " + taskToAssign.getTaskId());
-				addBehaviour(new AchieveREInitiator(getAgent(), message) {
-
-					@Override
-					protected void handleInform(ACLMessage inform) {
-						System.out.println("Agent "+ inform.getSender().getName() + " successfully performed the requested action");
-						tasksCompleted.add(taskToAssign.getTaskId());
-					}
-					
-					@Override
-					protected void handleAgree(ACLMessage agree) {
-						System.out.println("Agent "+ agree.getSender().getName() + " agreed to perform the requested action");
-						addBehaviour(assignTaksBehaviour);
-					}
-
-					@Override
-					protected void handleRefuse(ACLMessage refuse) {
-						System.out.println("Agent " + refuse.getSender().getName() + " is ocuppied");
-						potencialCollaboratorIndex = 0; //TODO change this to the second best available
-						addBehaviour(sendTaskBehaviour);
-					}
-
-					@Override
-					protected void handleFailure(ACLMessage failure) {
-						System.out.println("There was a failure!");
-					}
-					
-				});
+	private Task getTaskById(String id) {
+		for (int i = 0; i < tasksList.size(); i++) {
+			if(tasksList.get(i).getTaskId().equals(id)) {
+				return tasksList.get(i);
 			}
-		};
+		}
+		return null;
 	}
 	
-	public List<CollaboratorData> getCandidateColaborators(Task t) {
+	private List<Task> getAvailableTasks() {
+		List<Task> availableTasks = new ArrayList<Task>();
+		for (Task task : tasksList) {
+			if(!task.isDone() && !task.isAssigned() && !hasPrecedentsLeft(task) && hasCollaborators(task)) {
+				availableTasks.add(task);
+			}
+		}
+		return availableTasks;
+	}
+	
+	public boolean hasPrecedentsLeft(Task t) {
+		for (String pre : t.getPrecedences()) {
+			for (int i = 0; i < tasksList.size(); i++) {
+				if(tasksList.get(i).getTaskId().equals(pre)) {
+					if(!tasksList.get(i).isDone()) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	public boolean hasCollaborators(Task t) {
+		for (int i = 0; i < t.getCollaborators().size(); i++) {
+			AID collaboratorAID = t.getCollaborators().get(i);
+			for (int j = 0; j < collaboratorsData.size(); j++) {
+				if(collaboratorsData.get(j).getAID().equals(collaboratorAID)) {
+					if(!collaboratorsData.get(j).isOcuppied()) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	private void sendRequestMessage(AID aid, ACLMessage message, Task task) {
+		message.addReceiver(aid);
+		addBehaviour(new AchieveREInitiator(this, message) {
+			
+			@Override
+			protected void handleInform(ACLMessage inform) {
+				System.out.println("Agent " + inform.getSender().getName() + " " + inform.getContent());
+				String[] args = inform.getContent().split(" ");
+				if(args[0].equals("ASSIGNED") && args[1].equals(task.getTaskId())) {
+					task.assign();
+					tasksListIndex++;
+					addBehaviour(assignTaksBehaviour);
+				}
+			}
+			
+			@Override
+			protected void handleAgree(ACLMessage agree) {
+				System.out.println("Agent "+ agree.getSender().getName() + " agreed to perform task " + task.getTaskId());
+			}
+
+			@Override
+			protected void handleRefuse(ACLMessage refuse) {
+				System.out.println("Agent " + refuse.getSender().getName() + " is ocuppied");
+				potencialCollaboratorIndex++;
+				if(potencialCollaboratorIndex >= collaboratorsForTask.size()) {
+					tasksListIndex++;
+				}
+				updateCollaboratorAvailability(refuse.getSender(), true);
+				addBehaviour(assignTaksBehaviour);
+			}
+			
+		});
+	}
+	
+	private ACLMessage prepareRequestMessage(Task task) {
+		ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
+		message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+		String content = "REQUEST " + task.getTaskId();
+		for (String skill : task.getSkillsToPerformTask()) {
+			content += " " + skill;
+		}
+		message.setContent(content);
+		return message;
+	}
+	
+	public List<CollaboratorData> getCandidateColaborators(List<CollaboratorData> data, Task t) {
 		ArrayList<CollaboratorData> candidates = new ArrayList<CollaboratorData>();
-		for (int i = 0; i < collaboratorsData.size(); i++) {
-			if(collaboratorsData.get(i).canExecuteTask(t)) {
-				candidates.add(collaboratorsData.get(i));
+		for (int i = 0; i < data.size(); i++) {
+			if(data.get(i).canExecuteTask(t)) {
+				candidates.add(data.get(i));
 			}
 		}
 		return candidates;
@@ -258,34 +423,8 @@ public class Coordinator extends Agent{
 		this.myCollaborators.add(myCollaborator);
 	}
 	
-	private void registerProject() {
-  		DFAgentDescription dfd = new DFAgentDescription();
-  		dfd.setName(getAID());
-  		ServiceDescription sd = new ServiceDescription();
-  		sd.setName("AIAD project");
-  		sd.setType("project");
-  		// Agents that want to use this service need to "speak" the FIPA-SL language
-  		sd.addLanguages(FIPANames.ContentLanguage.FIPA_SL);
-  		dfd.addServices(sd);
-  		try {
-			DFService.register(this, dfd);
-		} catch (FIPAException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	private boolean checkCollaboratorAlreadyInProject(AID aid) {
-		for (int i = 0; i < collaboratorsData.size(); i++) {
-			if(collaboratorsData.get(i).getAID().equals(aid)){
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	private void searchForCollaborators() {
-	  	System.out.println("Agent " + getLocalName() + " searching for services of type \"collaborator\"");
+	private List<CollaboratorData> getDFCollaborators() {
+	  	List<CollaboratorData> collaborators = new ArrayList<CollaboratorData>();
 	  	try {
 	  		DFAgentDescription template = new DFAgentDescription();
 	  		ServiceDescription templateSd = new ServiceDescription();
@@ -294,58 +433,29 @@ public class Coordinator extends Agent{
 	  		SearchConstraints sc = new SearchConstraints();
 	  		sc.setMaxResults(-1l);
 	  		DFAgentDescription[] results = DFService.search(this, template, sc);
-	  		if (results.length > 0) {
-	  			iterateResults(results);
-	  		} else {
-	  			System.out.println("Agent " + getLocalName() + " did not find any collaborator service");
-	  			subscribe();
-	  		}
+  			for (int i = 0; i < results.length; i++) {
+  				DFAgentDescription dfd = results[i];
+  				AID provider = dfd.getName();
+  				Iterator it = dfd.getAllServices();
+  				while (it.hasNext()) {
+  					ServiceDescription sd = (ServiceDescription) it.next();
+  					if (sd.getType().equals("collaborator")) {
+  						Iterator it2 = sd.getAllProperties();
+  						CollaboratorData cd = new CollaboratorData(provider);
+  						while(it2.hasNext()) {
+  							Property p = (Property) it2.next();
+  							Float value = Float.parseFloat((String)p.getValue());
+  							cd.addSkill(p.getName(), value);
+  						}
+  						collaborators.add(cd);
+  					}
+  				}
+  			}
 	  	}
 	  	catch (FIPAException fe) {
 	  		fe.printStackTrace();
 	  	}
-	}
-	
-	private void iterateResults(DFAgentDescription[] results) {
-		for (int i = 0; i < results.length; ++i) {
-			DFAgentDescription dfd = results[i];
-			AID provider = dfd.getName();
-			Iterator it = dfd.getAllServices();
-			System.out.println("Agent " + provider.getName() + " providing a collaborator service");
-			while (it.hasNext()) {
-				ServiceDescription sd = (ServiceDescription) it.next();
-				if (sd.getType().equals("collaborator")) {
-					Iterator it2 = sd.getAllProperties();
-					CollaboratorData cd = new CollaboratorData(provider);
-					while(it2.hasNext()) {
-						Property p = (Property) it2.next();
-						System.out.println(p.getName() + ": " + p.getValue());
-						Float value = Float.parseFloat((String)p.getValue());
-						cd.addSkill(p.getName(), value);
-					}
-				}
-			}
-		}
-	}
-	
-	private List<Task> checkIfTasksCanBeDone() {
-		List<Task> tasksNotCovered = new ArrayList<Task>();
-		for (int i = 0; i < tasksList.size(); i++) {
-			Task task = tasksList.get(i);
-			if(!checkIfTaskCanBeDone(task)){
-				tasksNotCovered.add(task);
-			}
-		}
-		return tasksNotCovered;
-	}
-	
-	private boolean checkIfTaskCanBeDone(Task t) {
-		for (int j = 0; j < collaboratorsData.size(); j++) {
-			if(collaboratorsData.get(j).canExecuteTask(t)) {
-				return true;
-			}
-		}
-		return false;
+	  	return collaborators;
 	}
 	
 	private void buildSearchMessage() {
@@ -361,12 +471,28 @@ public class Coordinator extends Agent{
 	private void subscribe() {
 		addBehaviour(new SubscriptionInitiator(this, searchMessage) {
 			protected void handleInform(ACLMessage inform) {
-	  			System.out.println("Agent " + getLocalName() + ": Notification received from DF");
 	  			try {
 					DFAgentDescription[] results = DFService.decodeNotification(inform.getContent());
-			  		if (results.length > 0) {
-			  			iterateResults(results);
-			  		}
+					for (int i = 0; i < results.length; ++i) {
+						DFAgentDescription dfd = results[i];
+						AID provider = dfd.getName();
+						CollaboratorData cd = new CollaboratorData(provider);
+						if(!collaboratorsData.contains(cd)) {
+							Iterator it = dfd.getAllServices();
+							while (it.hasNext()) {
+								ServiceDescription sd = (ServiceDescription) it.next();
+								if (sd.getType().equals("collaborator")) {
+									Iterator it2 = sd.getAllProperties();
+									while(it2.hasNext()) {
+										Property p = (Property) it2.next();
+										Float value = Float.parseFloat((String)p.getValue());
+										cd.addSkill(p.getName(), value);
+									}
+									addToContactList(cd);
+								}
+							}
+						}
+					}
 			  	} catch (FIPAException fe) {
 			  		fe.printStackTrace();
 			  	}

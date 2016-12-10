@@ -59,4 +59,29 @@ public class CollaboratorData {
 	public boolean isOcuppied() {
 		return occupied;
 	}
+	
+	public void setAvailability(boolean occ) {
+		occupied = occ;
+	}
+	
+	@Override
+	public String toString() {
+		String s = "Collaborator " + aid.getName() + "\n";
+		if(occupied) {
+			s += "UNAVAILABLE";
+		} else {
+			s += "AVAILABLE";
+		}
+		s += "\n";
+		s += skills + "\n";
+		return s;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return aid.equals(((CollaboratorData)obj).getAID());
+	}
+	
+	
+	
 }

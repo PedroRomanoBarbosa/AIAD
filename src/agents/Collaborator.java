@@ -1,22 +1,24 @@
 package agents;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Map.Entry;
+import java.util.Queue;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.TickerBehaviour;
+import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
 import jade.domain.FIPAAgentManagement.Property;
-import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.introspection.Occurred;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
@@ -26,14 +28,14 @@ import data.Task;
 
 public class Collaborator extends Agent{
 	private static final long serialVersionUID = 1l;
-	private static final long MAX_SEARCH_VALUE = 10l;
 	private String id;
 	private HashMap<String, Float> skills; // skillId -> value(probabilistic)
-	private Task currentTask; // The current task this collaborator is doing
+	private String currentTask; // The current task this collaborator is doing
+	private AID currentCoordinator;
 	private boolean ocuppied; // Whether this agent is occupied or not
-	private Coordinator projectCoordinator; //The project coordinator
 	private HashMap<CollaboratorData,AID> collaboratorData; //skillId -> value(probabilistic)
-	private TickerBehaviour periodicSearchBehaviour;
+	private List<AID> requested; // Queue with the coordinators that requested this collaborators service
+	private WakerBehaviour doingTaskBehaviour;
 	
 	public Collaborator(){
 		skills = new HashMap<String, Float>();
@@ -41,14 +43,6 @@ public class Collaborator extends Agent{
 	
 	public HashMap<String, Float> getSkills() {
 		return this.skills;
-	}
-	
-	public Task getCurrentTask() {
-		return this.currentTask;
-	}
-	
-	public void setTask(Task task) {
-		this.currentTask = task;
 	}
 	
 	public void addSkill(String skillId, Float performance) {
@@ -61,6 +55,8 @@ public class Collaborator extends Agent{
 
 	@Override
 	protected void setup() {
+		skills = new HashMap<String, Float>();
+		requested = new ArrayList<AID>();
 		ocuppied = false;
 		
 		// TO CREATE COLLABORATORS FROM GUI
@@ -75,37 +71,63 @@ public class Collaborator extends Agent{
 
         
         //Create Behaviours
-        createFIPARequestBehaviour();
+        addFIPARequestBehaviour();
         
         registerService();
+	}
+	
+	public void createGoingTaskBheaviour() {
+		
 	}
 	
 	/**
 	 * Creates a FIPA request protocol behaviour.
 	 */
-	private void createFIPARequestBehaviour() {
+	private void addFIPARequestBehaviour() {
 		MessageTemplate template = MessageTemplate.and(MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST), MessageTemplate.MatchPerformative(ACLMessage.REQUEST) );
 		addBehaviour(new AchieveREResponder(this, template) {
 			
 			@Override
-			protected ACLMessage handleRequest(ACLMessage request) throws NotUnderstoodException, RefuseException {
+			protected ACLMessage handleRequest(ACLMessage request) {
 				System.out.println("Collaborator " + getLocalName() + ": REQUEST received from " + request.getSender().getName()); 
 				System.out.println("Action is " + request.getContent());
-				if(!ocuppied) {
-					ocuppied = true;
-					ACLMessage agree = request.createReply();
-					agree.setPerformative(ACLMessage.AGREE);
-					return agree;
-				} else {
-					throw new RefuseException("check-failed");
+				String[] args = request.getContent().split(" ");
+				if(args != null && args[0].equals("REQUEST")) {
+					if(!ocuppied) {
+						ocuppied = true;
+						ACLMessage agree = request.createReply();
+						agree.setPerformative(ACLMessage.AGREE);
+						currentTask = args[1];
+						return agree;
+					} else {
+						if(!currentCoordinator.equals(request.getSender())) {
+							requested.add(request.getSender());
+						}
+					}
 				}
+				ACLMessage refuse = request.createReply();
+				refuse.setPerformative(ACLMessage.REFUSE);
+				return refuse;
 			}
 			
 			@Override
 			protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
-				doTask();
-				System.out.println("Agent " + getLocalName() + ": Action successfully performed");
+				currentCoordinator = request.getSender();
+				Long time = calculateTime();
+				doingTaskBehaviour = new WakerBehaviour(getAgent(), time) {
+
+					@Override
+					protected void onWake() {
+						ocuppied = false;
+						notifyRequesters();
+						notifyCoordinator();
+						System.out.println("NOTIFIED!");
+					}
+					
+				};
+				addBehaviour(doingTaskBehaviour);
 				ACLMessage inform = request.createReply();
+				inform.setContent("ASSIGNED " + currentTask);
 				inform.setPerformative(ACLMessage.INFORM);
 				return inform;
 			}
@@ -113,12 +135,32 @@ public class Collaborator extends Agent{
 	}
 	
 	/**
+	 * Notifies all the requesters in the requested list that this collaborator is available.
+	 */
+	public void notifyRequesters() {
+		ACLMessage message = new ACLMessage(ACLMessage.INFORM);
+		message.setContent("AVAILABLE");
+		for (AID aid : requested) {
+			message.addReceiver(aid);
+		}
+		requested = new ArrayList<AID>();
+		send(message);
+	}
+	
+	public void notifyCoordinator() {
+		ACLMessage message = new ACLMessage(ACLMessage.INFORM);
+		message.setContent("DONE " + currentTask);
+		message.addReceiver(currentCoordinator);
+		send(message);
+	}
+	
+	/**
 	 * Method to simulate the collaborator performing a task.
 	 */
-	private void doTask() {
+	private Long calculateTime() {
 		Random rand = new Random();
 		int n = rand.nextInt(5) + 1;
-		doWait(n * 1000);
+		return new Long(5000);
 	}
 	
 	//TODO Remove this method
@@ -142,11 +184,10 @@ public class Collaborator extends Agent{
 	}
 	
 	private void registerService() {
-		System.out.println("registerService");
 		DFAgentDescription dfd = new DFAgentDescription();
   		dfd.setName(getAID());
   		ServiceDescription sd = new ServiceDescription();
-  		sd.setName(getLocalName() + " project collaborator");
+  		sd.setName("Projects Collaborator");
   		sd.setType("collaborator");
   		for(Map.Entry<String, Float> entry : skills.entrySet()) {
   			sd.addProperties(new Property(entry.getKey(), entry.getValue()));
