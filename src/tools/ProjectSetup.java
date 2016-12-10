@@ -185,7 +185,6 @@ public class ProjectSetup {
 		myCollaborators = parser.getCollaborators();
 		for (String coll_id : myCollaborators.keySet()) {
 			col = new Collaborator();
-			col.setId(coll_id);
 			
 			//System.out.println(coll_id);
 			

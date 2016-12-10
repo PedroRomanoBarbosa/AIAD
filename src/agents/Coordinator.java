@@ -370,6 +370,7 @@ public class Coordinator extends Agent{
 		ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
 		message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
 		String content = "REQUEST " + task.getTaskId();
+		content += " " + 5000; //TODO change this to task.getTime();
 		for (String skill : task.getSkillsToPerformTask()) {
 			content += " " + skill;
 		}

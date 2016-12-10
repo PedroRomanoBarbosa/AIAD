@@ -28,7 +28,7 @@ public class FireModel implements Model {
 		return this.recency_factor;
 	}
 	
-	private void addRating(){
+	private void addRating() {
 		/*
 		long endTime = (long) (System.nanoTime() - this.startTime);
 		double rating_weight = Math.exp(endTime/getRecencyFactor());
@@ -86,7 +86,7 @@ public class FireModel implements Model {
 			totalSum += t;
 		}
 		for (int i = 0; i < interactions.size(); i++) {
-			trust += times.get(i)/totalSum * interactions.get(i).rating;
+			trust += times.get(i)/(totalSum*1.0f) * interactions.get(i).rating;
 		}
 		// Only here to provide a security check
 		if(trust > 1.0d) {
@@ -95,8 +95,10 @@ public class FireModel implements Model {
 		return trust;
 	}
 	
-	/*
+	/**
 	 * Gets all the interactions for a certain collaborator with a given task.
+	 * @param aid The collaborator AID.
+	 * @param type The task type.
 	 */
 	private ArrayList<Interaction> getInteractionsByCollaboratorById(AID aid, String type) {
 		ArrayList<Interaction> results = new ArrayList<Interaction>();

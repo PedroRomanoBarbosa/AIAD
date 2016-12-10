@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Map.Entry;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -21,19 +20,20 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
 
-import data.CollaboratorData;
-
-
 public class Collaborator extends Agent{
 	private static final long serialVersionUID = 1l;
-	private String id;
 	private HashMap<String, Float> skills; // skillId -> value(probabilistic)
-	private String currentTask; // The current task this collaborator is doing
-	private AID currentCoordinator;
 	private boolean ocuppied; // Whether this agent is occupied or not
-	private HashMap<CollaboratorData,AID> collaboratorData; //skillId -> value(probabilistic)
 	private List<AID> requested; // Queue with the coordinators that requested this collaborators service
 	private WakerBehaviour doingTaskBehaviour;
+	
+	// Used when agreeing and doing a task
+	private String currentTask; // The current task this collaborator is doing
+	private AID currentCoordinator;
+	private long currentTaskTime;
+	private long currentTaskFinalTime;
+	private ArrayList<String> skillsForCurrentTask;
+	
 	
 	public Collaborator(){
 		skills = new HashMap<String, Float>();
@@ -59,17 +59,16 @@ public class Collaborator extends Agent{
 		
 		// TO CREATE COLLABORATORS FROM GUI
 		Object[] args = getArguments();
-		String s;
         if (args != null) {
             for (int i = 0; i < args.length-1; i+=2) {
-                s = (String) args[i];
                 skills.put((String)args[i], Float.parseFloat((String) args[i+1]));
             }
         }
 
-        //Create Behaviours
+        // Create Behaviours
         addFIPARequestBehaviour();
         
+        // Register in the Yellow Pages
         registerService();
 	}
 	
@@ -82,15 +81,21 @@ public class Collaborator extends Agent{
 			
 			@Override
 			protected ACLMessage handleRequest(ACLMessage request) {
-				System.out.println("Collaborator " + getLocalName() + ": REQUEST received from " + request.getSender().getName()); 
-				System.out.println("Action is " + request.getContent());
 				String[] args = request.getContent().split(" ");
 				if(args != null && args[0].equals("REQUEST")) {
+					System.out.println(getAID().getLocalName() + " << " + request.getContent() + " << " + request.getSender().getLocalName());
 					if(!ocuppied) {
 						ocuppied = true;
 						ACLMessage agree = request.createReply();
 						agree.setPerformative(ACLMessage.AGREE);
+						// Check task properties
 						currentTask = args[1];
+						currentTaskTime = Long.parseLong(args[2]);
+						skillsForCurrentTask = new ArrayList<String>();
+						for (int i = 3; i < args.length; i++) {
+							skillsForCurrentTask.add(args[i]);
+						}
+						currentCoordinator = request.getSender();
 						return agree;
 					} else {
 						if(!currentCoordinator.equals(request.getSender())) {
@@ -105,23 +110,24 @@ public class Collaborator extends Agent{
 			
 			@Override
 			protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
-				currentCoordinator = request.getSender();
-				Long time = calculateTime();
-				doingTaskBehaviour = new WakerBehaviour(getAgent(), time) {
+				calculateTime(currentTaskTime, skillsForCurrentTask);
+				System.out.println(getAID().getLocalName() + ": " + currentTaskFinalTime);
+				doingTaskBehaviour = new WakerBehaviour(getAgent(), currentTaskFinalTime) {
 
 					@Override
 					protected void onWake() {
 						ocuppied = false;
 						notifyRequesters();
-						notifyCoordinator();
-						System.out.println("NOTIFIED!");
+						notifyCoordinator(currentCoordinator);
 					}
 					
 				};
-				addBehaviour(doingTaskBehaviour);
 				ACLMessage inform = request.createReply();
 				inform.setContent("ASSIGNED " + currentTask);
 				inform.setPerformative(ACLMessage.INFORM);
+				
+				addBehaviour(doingTaskBehaviour);
+				
 				return inform;
 			}
 		} );
@@ -140,42 +146,39 @@ public class Collaborator extends Agent{
 		send(message);
 	}
 	
-	public void notifyCoordinator() {
+	/**
+	 * Notifies a coordinator that a task is done.
+	 */
+	public void notifyCoordinator(AID coord) {
 		ACLMessage message = new ACLMessage(ACLMessage.INFORM);
-		message.setContent("DONE " + currentTask);
-		message.addReceiver(currentCoordinator);
+		message.setContent("DONE " + currentTask + " " + currentTaskFinalTime);
+		message.addReceiver(coord);
 		send(message);
 	}
 	
 	/**
 	 * Method to simulate the collaborator performing a task.
 	 */
-	private Long calculateTime() {
+	private void calculateTime(long normalTime, ArrayList<String> taskSkills) {
+		long timeUpper = normalTime + ((long) (normalTime*0.5f));
+		long timeBottom = normalTime - ((long) (normalTime*0.5f));
+		float skillsValue = 0;
+		float skillsAverage;
+		
+		for (String skill : taskSkills) {
+			skillsValue += skills.get(skill);
+		}
+		skillsAverage = 1 - (skillsValue/taskSkills.size());
+		
 		Random rand = new Random();
-		int n = rand.nextInt(5) + 1;
-		return new Long(5000);
+		float randomFactor = rand.nextFloat(); //TODO later
+		
+		currentTaskFinalTime = ( (long) ( (timeUpper - timeBottom) * skillsAverage) ) + timeBottom; 
 	}
 	
-	//TODO Remove this method
-	public CollaboratorData getCollaboratorDataByAID(AID collaboratorAID) {
-		CollaboratorData collaboratorData = null;
-		for (Entry<CollaboratorData, AID> entry : this.collaboratorData.entrySet()) {
-            if (entry.getValue().equals(collaboratorAID)) {
-                collaboratorData = entry.getKey();
-                break;
-            }
-        }
-		return collaboratorData;
-	}
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-	
+	/**
+	 * Register the 'collaborator' service in the Yellow Pages with skills as properties.
+	 */
 	private void registerService() {
 		DFAgentDescription dfd = new DFAgentDescription();
   		dfd.setName(getAID());
