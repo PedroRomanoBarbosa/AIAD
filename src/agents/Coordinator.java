@@ -35,6 +35,7 @@ public class Coordinator extends Agent {
 	
 	// Project Meta Information
 	private Model model; // The trust model chosen
+	private String modelName; // The name of the trust model
 	private boolean hasModel; // If this coordinator has a trust model
 	private ArrayList<Collaborator> myCollaborators = new ArrayList<Collaborator>();
 	private List<CollaboratorData> collaboratorsData; //
@@ -72,8 +73,12 @@ public class Coordinator extends Agent {
 		projectFinished = false;
 		
 		// Set the trust model
-		String modelName = "FIRE";
 		hasModel = true;
+		Object[] args = getArguments();
+        if (args != null) {
+            modelName = (String) args[0];
+        }
+		
 		if(modelName.equals("FIRE")) {
 			model = new FireModel();
 		} else if(modelName.equals("SINALPHA")) {
@@ -108,6 +113,10 @@ public class Coordinator extends Agent {
 	
 	public void addTask(Task task){
 		tasksList.add(task);
+	}
+	
+	public void setModel(String name) {
+		modelName = name;
 	}
 	
 	/**
@@ -206,7 +215,7 @@ public class Coordinator extends Agent {
 								System.out.println();
 								projectFinished = true;
 								
-								// TESTING
+								// TESTING //TODO Remove
 								projectIndex++;
 								if(projectIndex < numberOfProjects) {
 									addNewProjectBehaviour();
