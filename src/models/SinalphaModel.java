@@ -82,9 +82,19 @@ public class SinalphaModel implements Model{
 		interaction.trust = trust;
 	}
 
+	/**
+	 * Utility function to display the database entries.
+	 */
 	@Override
 	public void print() {
-		
+		for (int i = 0; i < database.size(); i++) {
+			Interaction interaction = database.get(i);
+			System.out.println(interaction.interaction_id + 
+					" - " + interaction.type + 
+					" | " + interaction.coordinatorAID.getLocalName() +
+					" | " + interaction.collaboratorAID.getLocalName() +
+					" | " + interaction.trust);
+		}
 	}
 
 	@Override
