@@ -319,31 +319,7 @@ public class MyModel extends SimModelImpl{
 
 
 	
-	private void buildSchedule() {
-		
-		class SnapshotRunner extends BasicAction {
-		      public void execute() {
-		        dsurf.takeSnapshot();
-		      }
-		    };
-		
-		schedule.scheduleActionBeginning(0, new MainAction());
-		schedule.scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
-		schedule.scheduleActionAtInterval(1, plot, "step", Schedule.LAST);
-		schedule.scheduleActionAtInterval(100, new SnapshotRunner(), Schedule.LAST);
-	}
 	
-	
-	class MainAction extends BasicAction {
-
-		public void execute() {
-			myCoordinatorAgent.step();
-			for (int i = 0; i < myCollaboratorsAgents.size(); i++) {
-				myCollaboratorsAgents.get(i).step();
-			}
-		}
-
-	}
 	
 	public static void main(String[] args) {
 		SimInit init = new SimInit();
@@ -428,7 +404,7 @@ public class MyModel extends SimModelImpl{
 		myCollaborators = parser.getCollaborators();
 		for (String coll_id : myCollaborators.keySet()) {
 			col = new Collaborator();
-			//col.setId(coll_id);
+			col.setId(coll_id);
 			
 			System.out.println(coll_id);
 			
@@ -450,6 +426,51 @@ public class MyModel extends SimModelImpl{
 			addMyCollaborators(col);
 		}
 	}
-
 	
+	/*
+	* ---------------------------- ACTIONS TO PERFORM ----------------------------------------------------
+	* ------------------------------------- & ------------------------------------------------------------
+	* --------------------------------- SCHEDULING -------------------------------------------------------
+	*/
+	
+	private void buildSchedule() {
+		
+		/*
+	    class DummyPrint extends BasicAction {
+	    	public void execute() {
+	    		for (int i = 0; i < agentList.size(); i++) {
+					System.out.println("ALI "+agentList.get(i).getNodeLabel());
+				}
+		      }
+	    }
+		*/
+		//schedule.scheduleActionBeginning(0, new MainAction());
+		schedule.scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
+		schedule.scheduleActionAtInterval(1, plot, "step", Schedule.LAST);
+		//schedule.scheduleActionAtInterval(100, new DummyPrint(), Schedule.LAST);
+		schedule.scheduleActionAtInterval(100, new ChangeAgentsColor(), Schedule.INTERVAL_UPDATER);
+	}
+	
+	
+	class ChangeAgentsColor extends BasicAction {
+
+		@Override
+		public void execute() {
+			for (int i = 0; i < agentList.size(); i++) {
+				for (int j = 0; j < myCollaboratorsAgents.size(); j++) {
+					Collaborator col = myCollaboratorsAgents.get(j);
+					if (col.getId().equals(agentList.get(i).getNodeLabel())) {
+						if (col.isOcuppied()) {
+							agentList.get(i).setColor(Color.red);
+							//System.out.println("--> "+col.getId()+" está OCUPADO");
+						}
+						else{
+							agentList.get(i).setColor(Color.green);
+							//System.out.println("--> "+col.getId()+" está LIVRE");
+						}
+					}
+				}
+			}			
+		}
+	};
 }

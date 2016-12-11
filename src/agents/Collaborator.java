@@ -35,6 +35,8 @@ public class Collaborator extends Agent {
 	private long currentTaskFinalTime;
 	private ArrayList<String> skillsForCurrentTask;
 	
+	private String coll_id;
+	
 	
 	public Collaborator() {
 		skills = new HashMap<String, Float>();
@@ -50,6 +52,17 @@ public class Collaborator extends Agent {
 	
 	public void setSkills(HashMap<String, Float> skills) {
 		this.skills = skills;
+	}
+	
+	public boolean isOcuppied() {
+		return ocuppied;
+	}
+	
+	public void setId(String id){
+		coll_id = id;
+	}
+	public String getId(){
+		return coll_id;
 	}
 
 	/**
