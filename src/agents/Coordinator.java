@@ -2,6 +2,7 @@ package agents;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -24,14 +25,14 @@ import jade.util.leap.Iterator;
 
 import data.CollaboratorData;
 import data.Task;
-
+import models.FireModel;
 import models.Model;
 
 public class Coordinator extends Agent{
 	private static final long serialVersionUID = 1L;
 	
 	// Project Meta Information
-	private Model chosenModel; // The trust model chosen
+	private Model model; // The trust model chosen
 	private ArrayList<Collaborator> myCollaborators = new ArrayList<Collaborator>();
 	private List<CollaboratorData> collaboratorsData; //
 	//private List<CollaboratorData> collaboratorsData; // All the collaborators AIDs
@@ -58,21 +59,47 @@ public class Coordinator extends Agent{
 		tasksList = new ArrayList<Task>();
 		collaboratorsData = new ArrayList<CollaboratorData>();
 		projectFinished = false;
+		model = new FireModel();
 		
 		//Tests
+		/*
 		List<String> skills = new ArrayList<String>();
 		skills.add("skill1");
-		Task task = new Task("ID0");
+		skills.add("skill2");
+		List<String> dep = new ArrayList<String>();
+		dep.add("ID1");
+		Task task = new Task("ID0", 2000);
 		task.setSkillsToPerformTask(skills);
 		tasksList.add(task);
+		*/
 		
 		List<String> skills2 = new ArrayList<String>();
 		skills2.add("skill1");
-		Task task2 = new Task("ID1");
+		skills2.add("skill2");
+		Task task2 = new Task("ID1", "CONTACT", 5000);
 		task2.setSkillsToPerformTask(skills2);
 		tasksList.add(task2);
-		//tasks.add(new Task("ID1"));
-		//tasks.add(new Task("ID2"));
+		
+		List<String> skills3 = new ArrayList<String>();
+		skills3.add("skill1");
+		skills3.add("skill2");
+		Task task3 = new Task("ID2", "CONTACT", 5000);
+		task3.setSkillsToPerformTask(skills3);
+		tasksList.add(task3);
+		
+		List<String> skills4 = new ArrayList<String>();
+		skills4.add("skill1");
+		skills4.add("skill2");
+		Task task4 = new Task("ID3","CONTACT" , 5000);
+		task4.setSkillsToPerformTask(skills4);
+		tasksList.add(task4);
+		
+		List<String> skills5 = new ArrayList<String>();
+		skills5.add("skill1");
+		skills5.add("skill2");
+		Task task5 = new Task("ID4","CONTACT" , 5000);
+		task5.setSkillsToPerformTask(skills5);
+		tasksList.add(task5);
 		
 		// Create Behaviours
 		createStartProjectBehaviour();
@@ -85,14 +112,6 @@ public class Coordinator extends Agent{
 		addBehaviour(recieveMessageBehaviour);
 		addBehaviour(recieveTaskDoneBehaviour);
 		addBehaviour(startProjectBehaviour);
-	}
-	
-	public void setModel(Model model){
-		this.chosenModel = model;
-	}
-	
-	public boolean isProjectFinished(){
-		return projectFinished;
 	}
 	
 	public void addTask(Task task){
@@ -152,17 +171,27 @@ public class Coordinator extends Agent{
 			    	String[] args = msg.getContent().split(" ");
 			    	for (int i = 0; i < tasksList.size(); i++) {
 						if(tasksList.get(i).getTaskId().equals(args[1])) {
-							tasksList.get(i).done();
+							Task task = tasksList.get(i);
+							task.done();
+							long duration = System.nanoTime() - task.getStartTime();
+							double rating = calculateRating(task.getNormalDuration(), duration/1000000l);
+							model.addInteraction(getAID(), msg.getSender(), args[1], rating);
+							updateCollaboratorAvailability(msg.getSender(), false);
 							if(checkIfAllTasksDone()) {
 								projectDuration = System.nanoTime() - startTime;
 								System.out.println("Project finished!");
-								System.out.println("Duration: " + projectDuration/1000000000 + " seconds");
+								System.out.println("Duration: " + projectDuration/1000000000d + " seconds");
+								System.out.println("TRUST DATABASE: ");
+								model.print();
+								double trust = model.getCollaboratorTrustByTask(msg.getSender(), args[1]);
+								System.out.println("LAST AGENT TRUST VALUE: " + trust);
+								System.out.println();
 								projectFinished = true;
 							}
 						}
 					}
-			    	updateCollaboratorAvailability(msg.getSender(), false);
 			    	if(!assigning) {
+			    		System.out.println("NEW ITERATION!");
 			    		startNewIterationBehaviour(0l);
 			    	}
 			    } else {
@@ -192,7 +221,7 @@ public class Coordinator extends Agent{
 				}
 				printContactsList();
 				subscribe();
-				System.out.println("Started Project!");
+				System.out.println("Started Project!\n");
 				startTime = System.nanoTime();
 				startNewIterationBehaviour(0l);
 			}
@@ -263,10 +292,12 @@ public class Coordinator extends Agent{
 			public void action() {
 				//TODO For each available task choose the best collaborator(TRUST)
 				
+				/*
 				System.out.println("SIZE: " + available.size());
 				System.out.println("TASK INDEX: " + tasksListIndex);
 				System.out.println("COLLABORATOR INDEX: " + potencialCollaboratorIndex);
 				System.out.println();
+				*/
 				
 				// While there are tasks available in the available list select collaborator candidates
 				if(tasksListIndex < available.size()) {
@@ -342,6 +373,7 @@ public class Coordinator extends Agent{
 				String[] args = inform.getContent().split(" ");
 				if(args[0].equals("ASSIGNED") && args[1].equals(task.getTaskId())) {
 					task.assign();
+					task.setStartTime(System.nanoTime());
 					tasksListIndex++;
 					addBehaviour(assignTaksBehaviour);
 				}
@@ -358,6 +390,7 @@ public class Coordinator extends Agent{
 				potencialCollaboratorIndex++;
 				if(potencialCollaboratorIndex >= collaboratorsForTask.size()) {
 					tasksListIndex++;
+					potencialCollaboratorIndex = 0;
 				}
 				updateCollaboratorAvailability(refuse.getSender(), true);
 				addBehaviour(assignTaksBehaviour);
@@ -370,6 +403,7 @@ public class Coordinator extends Agent{
 		ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
 		message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
 		String content = "REQUEST " + task.getTaskId();
+		content += " " + task.getNormalDuration();
 		for (String skill : task.getSkillsToPerformTask()) {
 			content += " " + skill;
 		}
@@ -486,6 +520,29 @@ public class Coordinator extends Agent{
 			  	}
 			}
 		} );
+	}
+	
+	/**
+	 * Calculates the rating based on the performance in time compared to the 
+	 * normal duration of the task. All time units in milliseconds.
+	 * @param normalDur The normal duration of the task.
+	 * @param dur The duration of the task.
+	 * @return Rating between -1 and 1.
+	 */
+	private double calculateRating(long normalDur, long dur) {
+		long timeUpper = normalDur + ((long) (normalDur*0.5f));
+		long timeBottom = normalDur - ((long) (normalDur*0.5f));
+		long timeAll = timeUpper - timeBottom;
+		long timeInterval = dur - timeBottom;
+		double rating = 1d - ( timeInterval*1.0d/timeAll*1.0d );
+		rating = 2d*rating;
+		rating = rating - 1d;
+		if(rating > 1.0d) {
+			rating = 1.0d;
+		} else if(rating < -1.0d) {
+			rating = -1.0d;
+		}
+		return rating;
 	}
 	
 }
