@@ -301,10 +301,12 @@ public class MyModel extends SimModelImpl{
 		// plot number of different existing colors
 		plot.addSequence("tasks done", new Sequence() {
 			public double getSValue() {
+				
 				if (coord.getDoneTasks() < 0) {
 					return 0;
 				}
 				return coord.getDoneTasks();
+				//return 0;
 			}
 		});
 		// plot number of agents with the most abundant color
@@ -355,6 +357,9 @@ public class MyModel extends SimModelImpl{
 		AgentController coordinatorAgent = null;
 		
 		coord = new Coordinator();
+		coord.setId(coordinator);
+		coord.setModel(parser.getModelName().toUpperCase());
+		System.out.println("MODEL "+parser.getModelName().toUpperCase());
 		
 		// CREATE AGENT COORDINATOR
 		try {

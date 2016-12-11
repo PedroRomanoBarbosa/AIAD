@@ -1,0 +1,138 @@
+<?xml version="1.0"?>
+
+<scenario>
+  <project id='p01' model='fire'>
+    <intervenients>
+      <coordinator id='coord01' />
+    </intervenients>
+    <tasks>
+      <task id="t01"/>
+      <task id="t03"/>
+      <task id="t05"/>
+    </tasks>
+  </project>
+
+  <collaborators>
+    <collaborator id='col01'>
+      <skillProb skill='s01' prob='.1'/>
+      <skillProb skill='s02' prob='.2'/>
+      <skillProb skill='s03' prob='.3'/>
+      <skillProb skill='s04' prob='.4'/>
+      <skillProb skill='s05' prob='.5'/>
+      <skillProb skill='s07' prob='.6'/>
+      <skillProb skill='s11' prob='.7'/>
+      <skillProb skill='s13' prob='.8'/>
+      <skillProb skill='s19' prob='.9'/>
+    </collaborator>
+
+    <collaborator id='col02'>
+      <skillProb skill='s04' prob='.1'/>
+      <skillProb skill='s06' prob='.1'/>
+      <skillProb skill='s07' prob='.2'/>
+      <skillProb skill='s08' prob='.3'/>
+      <skillProb skill='s09' prob='.4'/>
+      <skillProb skill='s10' prob='.5'/>
+      <skillProb skill='s11' prob='.6'/>
+      <skillProb skill='s12' prob='.7'/>
+      <skillProb skill='s14' prob='.8'/>
+      <skillProb skill='s16' prob='.9'/>
+      <skillProb skill='s18' prob='1'/>
+      <skillProb skill='s20' prob='.1'/>
+    </collaborator>
+
+    <collaborator id='col03'>
+      <skillProb skill='s03' prob='.3'/>
+      <skillProb skill='s06' prob='.1'/>
+      <skillProb skill='s12' prob='.2'/>
+      <skillProb skill='s13' prob='.3'/>
+      <skillProb skill='s14' prob='.4'/>
+      <skillProb skill='s15' prob='.5'/>
+      <skillProb skill='s18' prob='.6'/>
+    </collaborator>
+
+    <collaborator id='col04'>
+      <skillProb skill='s16' prob='.7'/>
+      <skillProb skill='s17' prob='.8'/>
+      <skillProb skill='s18' prob='.9'/>
+      <skillProb skill='s19' prob='1'/>
+      <skillProb skill='s20' prob='.1'/>
+    </collaborator>
+  </collaborators>
+
+  <tasks>
+    <task id='t01' type='c01' time='1000'>
+      <skills>
+        <skill name='s01' />
+        <skill name='s07' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='t02' type='c02' time='2000'>
+      <skills>
+        <skill name='s02' />
+      </skills>
+      <tasks>
+          <task id='t06' />
+      </tasks>
+    </task>
+
+    <task id='t03' type='c03' time='3000'>
+      <skills>
+        <skill name='s03' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='t04' type='c02' time='2000'>
+      <skills>
+        <skill name='s04' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='t05' type='c05' time='5000'>
+      <skills>
+        <skill name='s05' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='t06' type='c03' time='3000'>
+      <skills>
+        <skill name='s06' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='t07' type='c01' time='1000'>
+      <skills>
+        <skill name='s07' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='t09' type='c01' time='1000'>
+      <skills>
+        <skill name='s09' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='t10' type='c02' time='2000'>
+      <skills>
+        <skill name='s02' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+  </tasks>
+
+</scenario>

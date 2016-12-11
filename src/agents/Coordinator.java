@@ -35,7 +35,6 @@ public class Coordinator extends Agent {
 	
 	// Project Meta Information
 	private Model model; // The trust model chosen
-	private String modelName; // The name of the trust model
 	private boolean hasModel; // If this coordinator has a trust model
 	private ArrayList<Collaborator> myCollaborators = new ArrayList<Collaborator>();
 	private List<CollaboratorData> collaboratorsData; //
@@ -60,6 +59,7 @@ public class Coordinator extends Agent {
 	
 	// Test variables
 	private int numberOfProjects = MetaData.numberOfProjects;
+	private String modelName; // The name of the trust model
 	private int projectIndex = 0;
 	
 	private String coord_id;
@@ -74,6 +74,10 @@ public class Coordinator extends Agent {
 	
 	public int getDoneTasks(){
 		return tasksList.size()-tasksDone;
+	}
+	
+	public void setModel(String name) {
+		modelName = name;
 	}
 	
 	/**
@@ -121,7 +125,30 @@ public class Coordinator extends Agent {
 		Task task5 = new Task("ID4","CONTACT" , 2000);
 		task5.setSkillsToPerformTask(skills5);
 		tasksList.add(task5);
-=======
+		
+	
+		// Tests
+		for (int i = 0; i < 6; i++) {
+			List<String> skills = new ArrayList<String>();
+			skills.add("organize");
+			Task task = new Task("ID" + i, "ORGANIZE", 2000);
+			task.setSkillsToPerformTask(skills);
+			tasksList.add(task);
+		}
+		*/
+		// Set the trust model
+		/*
+		String modelName = "FIRE";
+		hasModel = true;
+		if(modelName.equals("FIRE")) {
+			model = new FireModel();
+		} else if(modelName.equals("SINALPHA")) {
+			model = new SinalphaModel();
+		} else {
+			hasModel = false;
+		}
+		*/
+		
 		// Set the trust model
 		hasModel = true;
 		Object[] args = getArguments();
@@ -136,28 +163,7 @@ public class Coordinator extends Agent {
 		} else {
 			hasModel = false;
 		}
->>>>>>> refs/remotes/origin/master
 		
-	
-		// Tests
-		for (int i = 0; i < 6; i++) {
-			List<String> skills = new ArrayList<String>();
-			skills.add("organize");
-			Task task = new Task("ID" + i, "ORGANIZE", 2000);
-			task.setSkillsToPerformTask(skills);
-			tasksList.add(task);
-		}
-		*/
-		// Set the trust model
-		String modelName = "FIRE";
-		hasModel = true;
-		if(modelName.equals("FIRE")) {
-			model = new FireModel();
-		} else if(modelName.equals("SINALPHA")) {
-			model = new SinalphaModel();
-		} else {
-			hasModel = false;
-		}
 		// Create Behaviours
 		createStartProjectBehaviour();
 		createAssignTaskBehaviour(); 
@@ -174,10 +180,6 @@ public class Coordinator extends Agent {
 	
 	public void addTask(Task task){
 		tasksList.add(task);
-	}
-	
-	public void setModel(String name) {
-		modelName = name;
 	}
 	
 	/**
@@ -253,7 +255,7 @@ public class Coordinator extends Agent {
 				}));
 				msg = receive(pattern);
 			    if(msg != null) {
-			    	System.out.println("####" + msg.getContent());
+			    	System.out.println(msg.getContent());
 			    	String[] args = msg.getContent().split(" ");
 			    	for (int i = 0; i < tasksList.size(); i++) {
 						if(tasksList.get(i).getTaskId().equals(args[1])) {
@@ -277,7 +279,7 @@ public class Coordinator extends Agent {
 								System.out.println();
 								projectFinished = true;
 								
-								// TESTING //TODO Remove
+								// TESTING
 								projectIndex++;
 								if(projectIndex < numberOfProjects) {
 									addNewProjectBehaviour();
