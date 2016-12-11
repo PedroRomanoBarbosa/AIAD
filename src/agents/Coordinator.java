@@ -1,60 +1,45 @@
 package agents;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.Random;
 
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
-import jade.core.behaviours.TickerBehaviour;
 import jade.core.behaviours.WakerBehaviour;
-import jade.core.messaging.MatchAllFilter;
-import jade.domain.AMSService;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
-import jade.domain.FIPAAgentManagement.AMSAgentDescription;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
 import jade.domain.FIPAAgentManagement.Property;
-import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.MessageTemplate.MatchExpression;
 import jade.proto.AchieveREInitiator;
-import jade.proto.SimpleAchieveREInitiator;
-import jade.proto.SimpleAchieveREResponder;
 import jade.proto.SubscriptionInitiator;
 import jade.util.leap.Iterator;
+
 import data.CollaboratorData;
 import data.Task;
-
+import models.FireModel;
 import models.Model;
 
 public class Coordinator extends Agent{
 	private static final long serialVersionUID = 1L;
 	
 	// Project Meta Information
-	private Model chosenModel; // The trust model chosen
+	private Model model; // The trust model chosen
 	private ArrayList<Collaborator> myCollaborators = new ArrayList<Collaborator>();
-	private List<AID> collaborators; // All the collaborators AIDs //TODO delete this
 	private List<CollaboratorData> collaboratorsData; //
-	private Queue<Task> tasks; // A task Queue ordered by crescent number of precedences
+	//private List<CollaboratorData> collaboratorsData; // All the collaborators AIDs
 	private List<Task> tasksList;
-	private List<String> tasksCompleted; // List of Tasks Ids already done
-	private List<String> tasksNotDone; // List of Task Ids that are not done
-	private List<AID> availableInbox;
 	private boolean projectFinished; // Boolean flag indicating the project is over
-	private double projectDuration; // The duration of the project when ended
-	private long startTime, endTime; // Date for the beginning and ending of the project
-	private Task selectedTask;
+	private long projectDuration; // The duration of the project when ended
+	private long startTime; // Date for the beginning and ending of the project
 	private ACLMessage searchMessage;
 	
 	// Used for the main loop behaviour
@@ -67,37 +52,54 @@ public class Coordinator extends Agent{
 	// Coordinator Behaviours
 	private CyclicBehaviour recieveMessageBehaviour, recieveTaskDoneBehaviour;
 	private WakerBehaviour startProjectBehaviour, newIterationBehaviour;
-	private OneShotBehaviour assignTaksBehaviour, sendTaskBehaviour, searchCollaboratorsBehaviour;
+	private OneShotBehaviour assignTaksBehaviour;
 
 	@Override
 	protected void setup() {
-		collaborators = new ArrayList<AID>();
-		tasks = new PriorityQueue<Task>();
-		tasksCompleted = new ArrayList<String>();
+		tasksList = new ArrayList<Task>();
 		collaboratorsData = new ArrayList<CollaboratorData>();
-		availableInbox = new ArrayList<AID>();
 		projectFinished = false;
+		model = new FireModel();
 		
 		//Tests
+		/*
 		List<String> skills = new ArrayList<String>();
 		skills.add("skill1");
-		Task task = new Task("ID0");
+		skills.add("skill2");
+		List<String> dep = new ArrayList<String>();
+		dep.add("ID1");
+		Task task = new Task("ID0", 2000);
 		task.setSkillsToPerformTask(skills);
-		tasks.add(task);
+		tasksList.add(task);
+		*/
 		
 		List<String> skills2 = new ArrayList<String>();
 		skills2.add("skill1");
-		Task task2 = new Task("ID1");
+		skills2.add("skill2");
+		Task task2 = new Task("ID1", "CONTACT", 5000);
 		task2.setSkillsToPerformTask(skills2);
-		tasks.add(task2);
-		//tasks.add(new Task("ID1"));
-		//tasks.add(new Task("ID2"));
+		tasksList.add(task2);
 		
-		tasksList = new ArrayList<Task>(tasks);
-		tasksNotDone = new ArrayList<String>();
-		for (int i = 0; i < tasksList.size(); i++) {
-			tasksNotDone.add(tasksList.get(i).getTaskId());
-		}
+		List<String> skills3 = new ArrayList<String>();
+		skills3.add("skill1");
+		skills3.add("skill2");
+		Task task3 = new Task("ID2", "CONTACT", 5000);
+		task3.setSkillsToPerformTask(skills3);
+		tasksList.add(task3);
+		
+		List<String> skills4 = new ArrayList<String>();
+		skills4.add("skill1");
+		skills4.add("skill2");
+		Task task4 = new Task("ID3","CONTACT" , 5000);
+		task4.setSkillsToPerformTask(skills4);
+		tasksList.add(task4);
+		
+		List<String> skills5 = new ArrayList<String>();
+		skills5.add("skill1");
+		skills5.add("skill2");
+		Task task5 = new Task("ID4","CONTACT" , 5000);
+		task5.setSkillsToPerformTask(skills5);
+		tasksList.add(task5);
 		
 		// Create Behaviours
 		createStartProjectBehaviour();
@@ -112,26 +114,15 @@ public class Coordinator extends Agent{
 		addBehaviour(startProjectBehaviour);
 	}
 	
-	public ArrayList<AID> getCollaboratorsAIDs(){
-		return (ArrayList<AID>) this.collaborators;
-	}
-	
-	public void setModel(Model model){
-		this.chosenModel = model;
-	}
-	
-	public boolean isProjectFinished(){
-		return projectFinished;
-	}
-	
-	public void addCollaborator(AID collaboratorAID){
-		collaborators.add(collaboratorAID);
-	}
-	
 	public void addTask(Task task){
-		tasks.add(task);
+		tasksList.add(task);
 	}
 	
+	/**
+	 * Method that receives messages from all the collaborators that were requested
+	 * to do a certain task but weren't available that moment confirming that they are
+	 * available.
+	 */
 	private void createRecieveMessageBehaviour() {
 		recieveMessageBehaviour = new CyclicBehaviour() {
 			
@@ -142,6 +133,9 @@ public class Coordinator extends Agent{
 			    msg = receive(pattern);
 			    if(msg != null) {
 			    	updateCollaboratorAvailability(msg.getSender(), false);
+			    	if(!assigning) {
+			    		startNewIterationBehaviour(0l);
+			    	}
 			    } else {
 			    	block();
 			    }
@@ -149,6 +143,10 @@ public class Coordinator extends Agent{
 		};
 	}
 	
+	/**
+	 * Method that receives messages from all collaborators that are doing a task
+	 * confirming that the task is already done.
+	 */
 	private void createRecieveTaskDoneBehaviour() {
 		recieveTaskDoneBehaviour = new CyclicBehaviour() {
 			
@@ -173,17 +171,27 @@ public class Coordinator extends Agent{
 			    	String[] args = msg.getContent().split(" ");
 			    	for (int i = 0; i < tasksList.size(); i++) {
 						if(tasksList.get(i).getTaskId().equals(args[1])) {
-							tasksList.get(i).done();
-							if(tasksList.isEmpty()) { //TODO
+							Task task = tasksList.get(i);
+							task.done();
+							long duration = System.nanoTime() - task.getStartTime();
+							double rating = calculateRating(task.getNormalDuration(), duration/1000000l);
+							model.addInteraction(getAID(), msg.getSender(), args[1], rating);
+							updateCollaboratorAvailability(msg.getSender(), false);
+							if(checkIfAllTasksDone()) {
 								projectDuration = System.nanoTime() - startTime;
 								System.out.println("Project finished!");
-								System.out.println("Duration: " + projectDuration);
+								System.out.println("Duration: " + projectDuration/1000000000d + " seconds");
+								System.out.println("TRUST DATABASE: ");
+								model.print();
+								double trust = model.getCollaboratorTrustByTask(msg.getSender(), args[1]);
+								System.out.println("LAST AGENT TRUST VALUE: " + trust);
+								System.out.println();
 								projectFinished = true;
 							}
 						}
 					}
-			    	updateCollaboratorAvailability(msg.getSender(), false);
 			    	if(!assigning) {
+			    		System.out.println("NEW ITERATION!");
 			    		startNewIterationBehaviour(0l);
 			    	}
 			    } else {
@@ -213,7 +221,7 @@ public class Coordinator extends Agent{
 				}
 				printContactsList();
 				subscribe();
-				System.out.println("Started Project!");
+				System.out.println("Started Project!\n");
 				startTime = System.nanoTime();
 				startNewIterationBehaviour(0l);
 			}
@@ -247,6 +255,15 @@ public class Coordinator extends Agent{
 		return collaboratorsData;
 	}
 	
+	private boolean checkIfAllTasksDone() {
+		for (int i = 0; i < tasksList.size(); i++) {
+			if(!tasksList.get(i).isDone()) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	private void startNewIterationBehaviour(Long time) {
 		newIterationBehaviour = new WakerBehaviour(this, time) {
 			
@@ -265,6 +282,9 @@ public class Coordinator extends Agent{
 		addBehaviour(newIterationBehaviour);
 	}
 	
+	/**
+	 * Main assignment loop method.
+	 */
 	private void createAssignTaskBehaviour() {
 		assignTaksBehaviour = new OneShotBehaviour() {
 			
@@ -272,11 +292,14 @@ public class Coordinator extends Agent{
 			public void action() {
 				//TODO For each available task choose the best collaborator(TRUST)
 				
-				//TODO Assign to that collaborator and wait for callback
+				/*
 				System.out.println("SIZE: " + available.size());
 				System.out.println("TASK INDEX: " + tasksListIndex);
 				System.out.println("COLLABORATOR INDEX: " + potencialCollaboratorIndex);
 				System.out.println();
+				*/
+				
+				// While there are tasks available in the available list select collaborator candidates
 				if(tasksListIndex < available.size()) {
 					Task selectedTask = available.get(tasksListIndex);
 					collaboratorsForTask = available.get(tasksListIndex).getCollaborators();
@@ -289,20 +312,18 @@ public class Coordinator extends Agent{
 						tasksListIndex++;
 					}
 				} else {
-					System.out.println("END OF AVAILABLE TASKS");
-					assigning = false;
+					/* If at the end of assignment there are new tasks to be done(new available 
+					collaborators or tasks finished while assigning) then repeat process */
+					available = getAvailableTasks();
+					if(available.size() != 0) {
+						addBehaviour(assignTaksBehaviour);
+					} else {
+						System.out.println("END OF AVAILABLE TASKS");
+						assigning = false;
+					}
 				}
 			}
 		};
-	}
-	
-	private Task getTaskById(String id) {
-		for (int i = 0; i < tasksList.size(); i++) {
-			if(tasksList.get(i).getTaskId().equals(id)) {
-				return tasksList.get(i);
-			}
-		}
-		return null;
 	}
 	
 	private List<Task> getAvailableTasks() {
@@ -352,6 +373,7 @@ public class Coordinator extends Agent{
 				String[] args = inform.getContent().split(" ");
 				if(args[0].equals("ASSIGNED") && args[1].equals(task.getTaskId())) {
 					task.assign();
+					task.setStartTime(System.nanoTime());
 					tasksListIndex++;
 					addBehaviour(assignTaksBehaviour);
 				}
@@ -368,6 +390,7 @@ public class Coordinator extends Agent{
 				potencialCollaboratorIndex++;
 				if(potencialCollaboratorIndex >= collaboratorsForTask.size()) {
 					tasksListIndex++;
+					potencialCollaboratorIndex = 0;
 				}
 				updateCollaboratorAvailability(refuse.getSender(), true);
 				addBehaviour(assignTaksBehaviour);
@@ -380,6 +403,7 @@ public class Coordinator extends Agent{
 		ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
 		message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
 		String content = "REQUEST " + task.getTaskId();
+		content += " " + task.getNormalDuration();
 		for (String skill : task.getSkillsToPerformTask()) {
 			content += " " + skill;
 		}
@@ -401,20 +425,15 @@ public class Coordinator extends Agent{
 		return collaboratorsData;
 	}
 	
-	public void printState() {
-		System.out.println("#### STATE ####");
-		List<Task> l = new ArrayList<Task>(tasks);
-		System.out.println("Number of tasks: " + l.size());
-		for (Task task : l) {
-			System.out.println(task);
+	public CollaboratorData getCollaboratorDataByAID(AID aid) {
+		for (int i = 0; i < collaboratorsData.size(); i++) {
+			if(collaboratorsData.get(i).equals(aid)) {
+				return collaboratorsData.get(i);
+			}
 		}
-		System.out.print("TASKS DONE: (");
-		for (String t : tasksCompleted) {
-			System.out.print(" " + t);
-		}
-		System.out.println(" )\n");
+		return null;
 	}
-
+	
 	public ArrayList<Collaborator> getMyCollaborators() {
 		return myCollaborators;
 	}
@@ -489,6 +508,9 @@ public class Coordinator extends Agent{
 										cd.addSkill(p.getName(), value);
 									}
 									addToContactList(cd);
+									if(!assigning) {
+										startNewIterationBehaviour(0l);
+									}
 								}
 							}
 						}
@@ -498,6 +520,29 @@ public class Coordinator extends Agent{
 			  	}
 			}
 		} );
+	}
+	
+	/**
+	 * Calculates the rating based on the performance in time compared to the 
+	 * normal duration of the task. All time units in milliseconds.
+	 * @param normalDur The normal duration of the task.
+	 * @param dur The duration of the task.
+	 * @return Rating between -1 and 1.
+	 */
+	private double calculateRating(long normalDur, long dur) {
+		long timeUpper = normalDur + ((long) (normalDur*0.5f));
+		long timeBottom = normalDur - ((long) (normalDur*0.5f));
+		long timeAll = timeUpper - timeBottom;
+		long timeInterval = dur - timeBottom;
+		double rating = 1d - ( timeInterval*1.0d/timeAll*1.0d );
+		rating = 2d*rating;
+		rating = rating - 1d;
+		if(rating > 1.0d) {
+			rating = 1.0d;
+		} else if(rating < -1.0d) {
+			rating = -1.0d;
+		}
+		return rating;
 	}
 	
 }

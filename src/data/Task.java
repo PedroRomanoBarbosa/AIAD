@@ -13,7 +13,8 @@ public class Task implements Comparable<Task>{
 	private List<AID> collaborators;
 	private boolean done;
 	private boolean assigned;
-	private int duration = 0;
+	private long normalDuration;
+	private long startTime;
 	
 	public Task(String id, List<String> dp) {
 		taskId = id;
@@ -24,13 +25,27 @@ public class Task implements Comparable<Task>{
 		assigned = false;
 	}
 	
-	public Task(String id) {
+	public Task(String id, String type, long duration) {
 		taskId = id;
+		taskType = type;
 		skillsToPerform = new ArrayList<String>();
 		precedences = new ArrayList<String>();
 		collaborators = new ArrayList<AID>();
 		done = false;
 		assigned = false;
+		normalDuration = duration;
+	}
+	
+	public long getNormalDuration() {
+		return normalDuration;
+	}
+	
+	public void setStartTime(long time) {
+		startTime = time;
+	}
+	
+	public long getStartTime() {
+		return startTime;
 	}
 	
 	public List<String> getSkillsToPerformTask(){

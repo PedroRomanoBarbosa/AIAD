@@ -1,34 +1,25 @@
 package models;
 
 import jade.core.AID;
-import data.CollaboratorData;
 import data.Task;
-import agents.Collaborator;
-import agents.Coordinator;
 
 public class Interaction {
-	private int interaction_id;
+	static int interactionCounter;
+	int interaction_id;
+	String type;
 	AID coordinatorAID;
 	AID collaboratorAID;
-	Task task;
-	private int rating_value = 0; // -1 - has no skills to achieve the task; 1 - has skills to achieve it
+	double rating;
+	long time;
 	
-	public Interaction(AID coordinatorAID, AID collaboratorAID, int interaction_id){
-		this.coordinatorAID = coordinatorAID;
-		this.collaboratorAID = collaboratorAID;
-		this.interaction_id = interaction_id;
-		Collaborator collaborator = new Collaborator();
-		CollaboratorData collaboratorData = collaborator.getCollaboratorDataByAID(this.collaboratorAID);
-		if (collaboratorData.hasSkills(this.task))
-			this.rating_value = 1;
-		else
-			this.rating_value = -1;
-			
+	public Interaction(AID coord, AID coll, String t, double r, long tm){
+		coordinatorAID = coord;
+		collaboratorAID = coll;
+		type = t;
+		rating = r;
+		time = tm;
+		interactionCounter++;
+		interaction_id = interactionCounter;
 	}
-	
-	public int getRatingValue(){
-		return this.rating_value;
-	}
-	
 	
 }
