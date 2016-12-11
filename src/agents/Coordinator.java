@@ -62,6 +62,7 @@ public class Coordinator extends Agent {
 	private int projectIndex = 0;
 	
 	private String coord_id;
+	private int tasksDone = 0;
 	
 	public void setId(String id){
 		coord_id = id;
@@ -69,6 +70,11 @@ public class Coordinator extends Agent {
 	public String getId(){
 		return coord_id;
 	}
+	
+	public int getDoneTasks(){
+		return tasksList.size()-tasksDone;
+	}
+	
 	/**
 	 * Method before the agent runs. Initializes most fields and creates 
 	 * all the behaviours needed and launches the startup ones.
@@ -232,6 +238,7 @@ public class Coordinator extends Agent {
 						if(tasksList.get(i).getTaskId().equals(args[1])) {
 							Task task = tasksList.get(i);
 							task.done();
+							tasksDone++;
 							long duration = System.nanoTime() - task.getStartTime();
 							double rating = calculateRating(task.getNormalDuration(), duration/1000000l);
 							if(hasModel) {

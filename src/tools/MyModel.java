@@ -293,24 +293,26 @@ public class MyModel extends SimModelImpl{
 		c.addPauseListener(layout);
 		c.addExitListener(layout);
 
-		
 		// graph
 		// this is default! TODO
 		if (plot != null) plot.dispose();
-		plot = new OpenSequenceGraph("Colors and Agents", this);
-		plot.setAxisTitles("time", "n");
+		plot = new OpenSequenceGraph("Tasks and Agents", this);
+		plot.setAxisTitles("time", "tasks");
 		// plot number of different existing colors
-		plot.addSequence("Number of colors", new Sequence() {
+		plot.addSequence("tasks done", new Sequence() {
 			public double getSValue() {
-				return 0;
-				//return agentColors.size();
+				if (coord.getDoneTasks() < 0) {
+					return 0;
+				}
+				return coord.getDoneTasks();
 			}
 		});
 		// plot number of agents with the most abundant color
+		/*
 		plot.addSequence("Top color", new Sequence() {
 			public double getSValue() {
 				return 0;
-				/*
+				
 				int n = 0;
 				Enumeration<Integer> agentsPerColor = agentColors.elements();
 				while(agentsPerColor.hasMoreElements()) {
@@ -318,9 +320,10 @@ public class MyModel extends SimModelImpl{
 					if(c>n) n=c;
 				}
 				return n;
-				*/
+				
 			}
 		});
+		*/
 		plot.display();
 	}
 	
