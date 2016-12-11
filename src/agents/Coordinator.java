@@ -79,9 +79,9 @@ public class Coordinator extends Agent {
             modelName = (String) args[0];
         }
 		
-		if(modelName.equals("FIRE")) {
+		if(modelName.equals(MetaData.FIRE)) {
 			model = new FireModel();
-		} else if(modelName.equals("SINALPHA")) {
+		} else if(modelName.equals(MetaData.SINALPHA)) {
 			model = new SinalphaModel();
 		} else {
 			hasModel = false;
@@ -192,7 +192,7 @@ public class Coordinator extends Agent {
 				}));
 				msg = receive(pattern);
 			    if(msg != null) {
-			    	System.out.println("####" + msg.getContent());
+			    	System.out.println("#### " + msg.getSender().getName() + " >> " + msg.getContent());
 			    	String[] args = msg.getContent().split(" ");
 			    	for (int i = 0; i < tasksList.size(); i++) {
 						if(tasksList.get(i).getTaskId().equals(args[1])) {
