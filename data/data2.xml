@@ -35,7 +35,7 @@
   </collaborators>
 
   <tasks>
-    <task id='T1' type='ORGANIZE'>
+    <task id='T1' type='ORGANIZE' time='2000'>
       <skills>
         <skill name='ORGANIZE' />
       </skills>
@@ -43,7 +43,7 @@
       </tasks>
     </task>
 
-    <task id='T2' type='ORGANIZE'>
+    <task id='T2' type='ORGANIZE' time='2000'>
       <skills>
         <skill name='ORGANIZE' />
       </skills>
@@ -51,7 +51,7 @@
       </tasks>
     </task>
 
-    <task id='T3' type='ORGANIZE'>
+    <task id='T3' type='ORGANIZE' time='2000'>
       <skills>
         <skill name='ORGANIZE' />
       </skills>
@@ -59,7 +59,7 @@
       </tasks>
     </task>
 
-    <task id='T4' type='ORGANIZE'>
+    <task id='T4' type='ORGANIZE' time='2000'>
       <skills>
         <skill name='ORGANIZE' />
       </skills>
@@ -67,7 +67,7 @@
       </tasks>
     </task>
 
-    <task id='T5' type='ORGANIZE'>
+    <task id='T5' type='ORGANIZE' time='2000'>
       <skills>
         <skill name='ORGANIZE' />
       </skills>
@@ -75,7 +75,7 @@
       </tasks>
     </task>
 
-    <task id='T6' type='ORGANIZE'>
+    <task id='T6' type='ORGANIZE' time='2000'>
       <skills>
         <skill name='ORGANIZE' />
       </skills>
