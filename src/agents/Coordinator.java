@@ -24,6 +24,7 @@ import jade.proto.SubscriptionInitiator;
 import jade.util.leap.Iterator;
 
 import data.CollaboratorData;
+import data.MetaData;
 import data.Task;
 import models.FireModel;
 import models.Model;
@@ -57,7 +58,7 @@ public class Coordinator extends Agent {
 	private OneShotBehaviour assignTaksBehaviour, createNewProjectBehaviour;
 	
 	// Test variables
-	private int numberOfProjects = 2;
+	private int numberOfProjects = MetaData.numberOfProjects;
 	private int projectIndex = 0;
 
 	/**
@@ -242,7 +243,7 @@ public class Coordinator extends Agent {
 	 * whole agent assignment process.
 	 */
 	private void createStartProjectBehaviour() {
-		startProjectBehaviour = new WakerBehaviour(this, 5000l) {
+		startProjectBehaviour = new WakerBehaviour(this, MetaData.projectSetupTime) {
 
 			@Override
 			protected void onWake() {
@@ -341,8 +342,6 @@ public class Coordinator extends Agent {
 			
 			@Override
 			public void action() {
-				//TODO For each available task choose the best collaborator(TRUST)
-				
 				// While there are tasks available in the available list select collaborator candidates
 				if(tasksListIndex < available.size()) {
 					System.out.println("NEW TASK TO BE DONE!");
