@@ -2,8 +2,11 @@ package models;
 
 import jade.core.AID;
 
+/**
+ * Interface for a model to implement so that other classes can
+ * use their functions
+ */
 public interface Model {
-	double calculateTrustworthiness(double... ParamsToCheck);
 	
 	void addInteraction(AID coord, AID coll, String type, double rating);
 	

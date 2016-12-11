@@ -4,5 +4,6 @@ package data;
  * Class for global variables.
  */
 public class MetaData {
-
+	public final static long projectSetupTime = 5000l;
+	public final static int numberOfProjects = 2;
 }

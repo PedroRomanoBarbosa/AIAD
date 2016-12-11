@@ -105,7 +105,6 @@ public class Collaborator extends Agent {
 			protected ACLMessage handleRequest(ACLMessage request) {
 				String[] args = request.getContent().split(" ");
 				if(args != null && args[0].equals("REQUEST")) {
-					System.out.println(getAID().getLocalName() + " << " + request.getContent() + " << " + request.getSender().getLocalName());
 					if(!ocuppied) {
 						ocuppied = true;
 						ACLMessage agree = request.createReply();
@@ -133,7 +132,6 @@ public class Collaborator extends Agent {
 			@Override
 			protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
 				calculateTime(currentTaskTime, skillsForCurrentTask);
-				System.out.println(getAID().getLocalName() + ": " + currentTaskFinalTime);
 				doingTaskBehaviour = new WakerBehaviour(getAgent(), currentTaskFinalTime) {
 
 					@Override

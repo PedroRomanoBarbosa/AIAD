@@ -2,12 +2,7 @@ package models;
 
 import jade.core.AID;
 
-public class BetaModel implements Model{
-
-	@Override
-	public double calculateTrustworthiness(double... ParamsToCheck) {
-		return 0;
-	}
+public class BetaModel implements Model {
 
 	@Override
 	public void addInteraction(AID coord, AID coll, String type, double rating) {

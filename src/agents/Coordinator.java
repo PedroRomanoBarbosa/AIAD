@@ -24,6 +24,7 @@ import jade.proto.SubscriptionInitiator;
 import jade.util.leap.Iterator;
 
 import data.CollaboratorData;
+import data.MetaData;
 import data.Task;
 import models.FireModel;
 import models.Model;
@@ -57,7 +58,7 @@ public class Coordinator extends Agent {
 	private OneShotBehaviour assignTaksBehaviour, createNewProjectBehaviour;
 	
 	// Test variables
-	private int numberOfProjects = 2;
+	private int numberOfProjects = MetaData.numberOfProjects;
 	private int projectIndex = 0;
 	
 	private String coord_id;
@@ -235,13 +236,12 @@ public class Coordinator extends Agent {
 							double rating = calculateRating(task.getNormalDuration(), duration/1000000l);
 							if(hasModel) {
 								model.addInteraction(getAID(), msg.getSender(), args[2], rating);
-								model.print();
 							}
 							updateCollaboratorAvailability(msg.getSender(), false);
 							if(checkIfAllTasksDone()) {
 								projectDuration = System.nanoTime() - startTime;
-								System.out.println("Project finished!");
-								System.out.println("Duration: " + projectDuration/1000000000d + " seconds");
+								System.out.println("PROJECT HAS ENDED!");
+								System.out.println("DURATION: " + projectDuration/1000000000d + " SECONDS");
 								System.out.println("TRUST DATABASE: ");
 								if(hasModel) {
 									model.print();
@@ -285,7 +285,7 @@ public class Coordinator extends Agent {
 	 * whole agent assignment process.
 	 */
 	private void createStartProjectBehaviour() {
-		startProjectBehaviour = new WakerBehaviour(this, 5000l) {
+		startProjectBehaviour = new WakerBehaviour(this, MetaData.projectSetupTime) {
 
 			@Override
 			protected void onWake() {
@@ -297,7 +297,7 @@ public class Coordinator extends Agent {
 				}
 				printContactsList();
 				subscribe();
-				System.out.println("Started Project!\n");
+				System.out.println("PROJECT STARTED!\n");
 				startTime = System.nanoTime();
 				startNewIterationBehaviour(0l);
 			}
@@ -384,11 +384,8 @@ public class Coordinator extends Agent {
 			
 			@Override
 			public void action() {
-				//TODO For each available task choose the best collaborator(TRUST)
-				
 				// While there are tasks available in the available list select collaborator candidates
 				if(tasksListIndex < available.size()) {
-					System.out.println("NEW TASK TO BE DONE!");
 					Task selectedTask = available.get(tasksListIndex);
 					/* If the coordinator has a trust model then order collaborators by trust. If not 
 					 * get the collaborators of a task by the original ordered that they were found.
@@ -522,7 +519,6 @@ public class Coordinator extends Agent {
 			
 			@Override
 			protected void handleInform(ACLMessage inform) {
-				System.out.println("Agent " + inform.getSender().getName() + " " + inform.getContent());
 				String[] args = inform.getContent().split(" ");
 				if(args[0].equals("ASSIGNED") && args[1].equals(task.getTaskId())) {
 					task.assign();
@@ -534,12 +530,12 @@ public class Coordinator extends Agent {
 			
 			@Override
 			protected void handleAgree(ACLMessage agree) {
-				System.out.println("Agent "+ agree.getSender().getName() + " agreed to perform task " + task.getTaskId());
+				System.out.println("AGENT "+ agree.getSender().getName() + " AGREED TO " + task.getTaskId());
 			}
 
 			@Override
 			protected void handleRefuse(ACLMessage refuse) {
-				System.out.println("Agent " + refuse.getSender().getName() + " is ocuppied");
+				System.out.println("AGENT " + refuse.getSender().getName() + " REFUSED");
 				potencialCollaboratorIndex++;
 				if(potencialCollaboratorIndex >= collaboratorsForTask.size()) {
 					tasksListIndex++;
