@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+
+<scenario>
+  <project id='PO2' model='FIRE'>
+    <intervenients>
+      <coordinator id='Romano' />
+    </intervenients>
+    <tasks>
+      <task id="T1"/>
+      <task id="T2"/>
+      <task id="T3"/>
+      <task id="T4"/>
+      <task id="T5"/>
+      <task id="T6"/>
+    </tasks>
+  </project>
+
+  <collaborators>
+    <collaborator id='COL1'>
+      <skillProb skill='ORGANIZE' prob='0.5'/>
+    </collaborator>
+
+    <collaborator id='COL2'>
+      <skillProb skill='ORGANIZE' prob='0.2'/>
+    </collaborator>
+
+    <collaborator id='COL3'>
+      <skillProb skill='ORGANIZE' prob='0.8'/>
+    </collaborator>
+
+    <collaborator id='COL4'>
+      <skillProb skill='ORGANIZE' prob='0.7'/>
+    </collaborator>
+
+  </collaborators>
+
+  <tasks>
+    <task id='T1' type='ORGANIZE'>
+      <skills>
+        <skill name='ORGANIZE' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='T2' type='ORGANIZE'>
+      <skills>
+        <skill name='ORGANIZE' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='T3' type='ORGANIZE'>
+      <skills>
+        <skill name='ORGANIZE' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='T4' type='ORGANIZE'>
+      <skills>
+        <skill name='ORGANIZE' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='T5' type='ORGANIZE'>
+      <skills>
+        <skill name='ORGANIZE' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+    <task id='T6' type='ORGANIZE'>
+      <skills>
+        <skill name='ORGANIZE' />
+      </skills>
+      <tasks>
+      </tasks>
+    </task>
+
+  </tasks>
+
+</scenario>
