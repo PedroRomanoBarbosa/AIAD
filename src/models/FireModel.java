@@ -7,36 +7,12 @@ import jade.core.AID;
 import models.Interaction;
 
 public class FireModel implements Model {
-	private int interaction_id = 0;
 	AID coordinatorAID;
 	AID collaboratorAID;
-	private double recency_factor = 0;
 	private ArrayList<Interaction> database;
-	private double startTime = 0;
 	
 	public FireModel() {
 		database = new ArrayList<Interaction>();
-	}
-	
-	public FireModel(AID coordinatorAID, AID collaboratorAID, int d){
-		database = new ArrayList<Interaction>();
-		this.recency_factor = (- d) / (Math.log(0.5)/Math.log(Math.E)); //TODO remove
-		this.coordinatorAID = coordinatorAID;
-		this.collaboratorAID = collaboratorAID;
-		this.startTime = ( System.nanoTime() / (long)1000000000 );
-	}
-	
-	private double getRecencyFactor() {
-		return this.recency_factor;
-	}
-	
-	private void addRating() {
-		/*
-		long endTime = (long) (System.nanoTime() - this.startTime);
-		double rating_weight = Math.exp(endTime/getRecencyFactor());
-		Interaction interaction = new Interaction(this.coordinatorAID, this.collaboratorAID, this.interaction_id);
-		this.ratings_database.put(interaction, rating_weight);
-		*/
 	}
 	
 	/**
@@ -50,25 +26,6 @@ public class FireModel implements Model {
 	public void addInteraction(AID coord, AID coll, String type, double rating) {
 		Interaction interaction = new Interaction(coord,coll,type,rating,System.nanoTime());
 		database.add(interaction);
-	}
-	
-	@SuppressWarnings("rawtypes")
-	public double calculateTrustworthiness(double... ParamsToCheck){
-		/*
-		if (ParamsToCheck.length != 0) {
-	         throw new IllegalArgumentException();
-	    }
-		double trustworthiness = 0;
-		HashMap<Interaction, Double> database = getRatingsDatabase();
-		Iterator it = database.entrySet().iterator();
-		while (it.hasNext()) {
-			Map.Entry pair = (Map.Entry)it.next();
-			trustworthiness += ((Interaction) pair.getKey()).getRatingValue() * ((Double) pair.getValue());
-			it.remove();
-		}
-		return trustworthiness;
-		*/
-		return 0;
 	}
 	
 	/**
