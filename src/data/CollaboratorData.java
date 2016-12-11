@@ -7,9 +7,10 @@ import java.util.HashMap;
 
 import jade.core.AID;
 
-public class CollaboratorData {
+public class CollaboratorData implements Comparable<CollaboratorData> {
 	private AID aid;
 	private boolean occupied;
+	private double trust; // Only used when comparing collaborators
 	private HashMap<String,Float> skills; //skillId -> value(probabilistic)
 	
 	public CollaboratorData() {
@@ -22,6 +23,13 @@ public class CollaboratorData {
 		occupied = false;
 		skills = new HashMap<String, Float>();
 	}
+	
+	public CollaboratorData(AID id, double t) {
+		aid = id;
+		trust = t;
+		occupied = false;
+		skills = new HashMap<String, Float>();
+	} 
 	
 	public boolean hasSkills(Task t){
 		ArrayList<String> skillsToPerformTask = (ArrayList<String>) (t.getSkillsToPerformTask());
@@ -50,6 +58,10 @@ public class CollaboratorData {
 		return true;
 	}
 	
+	public double getTrustValue() {
+		return trust;
+	}
+	
 	public AID getAID() {
 		return aid;
 	}
@@ -76,12 +88,24 @@ public class CollaboratorData {
 		}
 		s += "\n";
 		s += skills + "\n";
+		s += trust;
 		return s;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		return aid.equals(((CollaboratorData)obj).getAID());
+	}
+
+	@Override
+	public int compareTo(CollaboratorData cd) {
+		if(trust > cd.getTrustValue()) {
+			return -1;
+		} else if(trust < cd.getTrustValue()){
+			return 1;
+		} else {
+			return 0;
+		}
 	}
 	
 }

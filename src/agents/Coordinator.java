@@ -1,8 +1,8 @@
 package agents;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 import jade.core.AID;
 import jade.core.Agent;
@@ -46,7 +46,7 @@ public class Coordinator extends Agent{
 	private int tasksListIndex;
 	private int potencialCollaboratorIndex;
 	private List<Task> available;
-	private List<AID> collaboratorsForTask;
+	private List<CollaboratorData> collaboratorsForTask;
 	private boolean assigning;
 	
 	// Coordinator Behaviours
@@ -54,6 +54,10 @@ public class Coordinator extends Agent{
 	private WakerBehaviour startProjectBehaviour, newIterationBehaviour;
 	private OneShotBehaviour assignTaksBehaviour;
 
+	/**
+	 * Method before the agent runs. Initializes most fields and creates 
+	 * all the behaviours needed and launches the startup ones.
+	 */
 	@Override
 	protected void setup() {
 		tasksList = new ArrayList<Task>();
@@ -76,28 +80,28 @@ public class Coordinator extends Agent{
 		List<String> skills2 = new ArrayList<String>();
 		skills2.add("skill1");
 		skills2.add("skill2");
-		Task task2 = new Task("ID1", "CONTACT", 5000);
+		Task task2 = new Task("ID1", "CONTACT", 2000);
 		task2.setSkillsToPerformTask(skills2);
 		tasksList.add(task2);
 		
 		List<String> skills3 = new ArrayList<String>();
 		skills3.add("skill1");
 		skills3.add("skill2");
-		Task task3 = new Task("ID2", "CONTACT", 5000);
+		Task task3 = new Task("ID2", "CONTACT", 2000);
 		task3.setSkillsToPerformTask(skills3);
 		tasksList.add(task3);
 		
 		List<String> skills4 = new ArrayList<String>();
 		skills4.add("skill1");
 		skills4.add("skill2");
-		Task task4 = new Task("ID3","CONTACT" , 5000);
+		Task task4 = new Task("ID3","CONTACT" , 2000);
 		task4.setSkillsToPerformTask(skills4);
 		tasksList.add(task4);
 		
 		List<String> skills5 = new ArrayList<String>();
 		skills5.add("skill1");
 		skills5.add("skill2");
-		Task task5 = new Task("ID4","CONTACT" , 5000);
+		Task task5 = new Task("ID4","CONTACT" , 2000);
 		task5.setSkillsToPerformTask(skills5);
 		tasksList.add(task5);
 		
@@ -107,6 +111,7 @@ public class Coordinator extends Agent{
 		createRecieveMessageBehaviour();
 		createRecieveTaskDoneBehaviour();
 		
+		// Builds message to search for agents
 		buildSearchMessage();
 		
 		addBehaviour(recieveMessageBehaviour);
@@ -175,7 +180,7 @@ public class Coordinator extends Agent{
 							task.done();
 							long duration = System.nanoTime() - task.getStartTime();
 							double rating = calculateRating(task.getNormalDuration(), duration/1000000l);
-							model.addInteraction(getAID(), msg.getSender(), args[1], rating);
+							model.addInteraction(getAID(), msg.getSender(), args[2], rating);
 							updateCollaboratorAvailability(msg.getSender(), false);
 							if(checkIfAllTasksDone()) {
 								projectDuration = System.nanoTime() - startTime;
@@ -183,7 +188,7 @@ public class Coordinator extends Agent{
 								System.out.println("Duration: " + projectDuration/1000000000d + " seconds");
 								System.out.println("TRUST DATABASE: ");
 								model.print();
-								double trust = model.getCollaboratorTrustByTask(msg.getSender(), args[1]);
+								double trust = model.getCollaboratorTrustByTask(msg.getSender(), args[2]);
 								System.out.println("LAST AGENT TRUST VALUE: " + trust);
 								System.out.println();
 								projectFinished = true;
@@ -201,6 +206,11 @@ public class Coordinator extends Agent{
 		};
 	}
 	
+	/**
+	 * Updates collaborator availability in the collaborators list.
+	 * @param aid The collaborator.
+	 * @param occupied If the collaborator now to occupied or not.
+	 */
 	private void updateCollaboratorAvailability(AID aid, boolean occupied) {
 		for (int i = 0; i < collaboratorsData.size(); i++) {
 			if(collaboratorsData.get(i).getAID().equals(aid)) {
@@ -209,6 +219,10 @@ public class Coordinator extends Agent{
 		}
 	}
 	
+	/**
+	 * Creates the start project behaviour responsible for bootstrapping the
+	 * whole agent assignment process.
+	 */
 	private void createStartProjectBehaviour() {
 		startProjectBehaviour = new WakerBehaviour(this, 5000l) {
 
@@ -229,6 +243,10 @@ public class Coordinator extends Agent{
 		};
 	}
 	
+	/**
+	 * Utility method to print all the contacts as well as all the collaborators
+	 * available after searched for each task.
+	 */
 	private void printContactsList() {
 		System.out.println("ALL CONTACTS: \n" + collaboratorsData);
 		System.out.println("TASKS:");
@@ -240,6 +258,11 @@ public class Coordinator extends Agent{
 		}
 	}
 	
+	/**
+	 * Adds a collaborator AID to the contacts list and puts it in the tasks list
+	 * which task this collaborator can do.
+	 * @param collaborator The collaborator data.
+	 */
 	private void addToContactList(CollaboratorData collaborator) {
 		for (Task t : tasksList) {
 			if(collaborator.canExecuteTask(t)) {
@@ -255,6 +278,10 @@ public class Coordinator extends Agent{
 		return collaboratorsData;
 	}
 	
+	/**
+	 * Method responsible for checking if all the tasks are done or not.
+	 * @return Whether all the tasks are done or not.
+	 */
 	private boolean checkIfAllTasksDone() {
 		for (int i = 0; i < tasksList.size(); i++) {
 			if(!tasksList.get(i).isDone()) {
@@ -264,6 +291,11 @@ public class Coordinator extends Agent{
 		return true;
 	}
 	
+	/**
+	 * This starts a new iteration of assignment. basically another round of
+	 * checking which tasks can be done or not.
+	 * @param time The delay in which this behaviour can occur.
+	 */
 	private void startNewIterationBehaviour(Long time) {
 		newIterationBehaviour = new WakerBehaviour(this, time) {
 			
@@ -292,21 +324,15 @@ public class Coordinator extends Agent{
 			public void action() {
 				//TODO For each available task choose the best collaborator(TRUST)
 				
-				/*
-				System.out.println("SIZE: " + available.size());
-				System.out.println("TASK INDEX: " + tasksListIndex);
-				System.out.println("COLLABORATOR INDEX: " + potencialCollaboratorIndex);
-				System.out.println();
-				*/
-				
 				// While there are tasks available in the available list select collaborator candidates
 				if(tasksListIndex < available.size()) {
 					Task selectedTask = available.get(tasksListIndex);
-					collaboratorsForTask = available.get(tasksListIndex).getCollaborators();
+					collaboratorsForTask = getCollaboratorsForTaskOrderedByTrust(selectedTask);
+					//collaboratorsForTask = available.get(tasksListIndex).getCollaborators(); // TODO remove
 					if(potencialCollaboratorIndex < available.get(tasksListIndex).getCollaborators().size()) {
-						AID collaborator = available.get(tasksListIndex).getCollaborators().get(potencialCollaboratorIndex); //TODO Change
+						CollaboratorData collaborator = collaboratorsForTask.get(potencialCollaboratorIndex);
 						ACLMessage message = prepareRequestMessage(selectedTask);
-						sendRequestMessage(collaborator, message, selectedTask);
+						sendRequestMessage(collaborator.getAID(), message, selectedTask);
 					} else {
 						potencialCollaboratorIndex = 0;
 						tasksListIndex++;
@@ -326,6 +352,28 @@ public class Coordinator extends Agent{
 		};
 	}
 	
+	/**
+	 * Gets a list of all collaborators of a task ordered by trust.
+	 * @param task The task to search for.
+	 * @return List with collaborators ordered.
+	 */
+	private List<CollaboratorData> getCollaboratorsForTaskOrderedByTrust(Task task) {
+		List<CollaboratorData> collaborators = new ArrayList<CollaboratorData>();
+		for (int i = 0; i < task.getCollaborators().size(); i++) {
+			AID aid = task.getCollaborators().get(i);
+			double trust = model.getCollaboratorTrustByTask(aid, task.getTaskType());
+			CollaboratorData cd = new CollaboratorData(aid,trust);
+			collaborators.add(cd);
+		}
+		Collections.sort(collaborators);
+		return collaborators;
+	}
+	
+	/**
+	 * Returns all the available tasks. The ones that aren't done, assigned nor
+	 * have any precedences and also that have at least one collaborator unoccupied.
+	 * @return
+	 */
 	private List<Task> getAvailableTasks() {
 		List<Task> availableTasks = new ArrayList<Task>();
 		for (Task task : tasksList) {
@@ -336,6 +384,11 @@ public class Coordinator extends Agent{
 		return availableTasks;
 	}
 	
+	/**
+	 * Checks if a task has any precedent tasks left to be done.
+	 * @param t The task.
+	 * @return If task has precedents or not.
+	 */
 	public boolean hasPrecedentsLeft(Task t) {
 		for (String pre : t.getPrecedences()) {
 			for (int i = 0; i < tasksList.size(); i++) {
@@ -349,6 +402,11 @@ public class Coordinator extends Agent{
 		return false;
 	}
 	
+	/**
+	 * Checks if a task has at least one collaborator unoccupied.
+	 * @param t The task.
+	 * @return if task has free collaborators.
+	 */
 	public boolean hasCollaborators(Task t) {
 		for (int i = 0; i < t.getCollaborators().size(); i++) {
 			AID collaboratorAID = t.getCollaborators().get(i);
@@ -363,6 +421,13 @@ public class Coordinator extends Agent{
 		return false;
 	}
 	
+	/**
+	 * This method sends a FIPA request protocol message to a collaborator with
+	 * a task for him to do.
+	 * @param aid The collaborator.
+	 * @param message The ACLMessage.
+	 * @param task The task to be done.
+	 */
 	private void sendRequestMessage(AID aid, ACLMessage message, Task task) {
 		message.addReceiver(aid);
 		addBehaviour(new AchieveREInitiator(this, message) {
@@ -399,10 +464,16 @@ public class Coordinator extends Agent{
 		});
 	}
 	
+	/**
+	 * This method prepares the FIPA request method.
+	 * @param task The task with the information to put in the message.
+	 * @return The ACLMessaeg to send.
+	 */
 	private ACLMessage prepareRequestMessage(Task task) {
 		ACLMessage message = new ACLMessage(ACLMessage.REQUEST);
 		message.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
 		String content = "REQUEST " + task.getTaskId();
+		content += " " + task.getTaskType();
 		content += " " + task.getNormalDuration();
 		for (String skill : task.getSkillsToPerformTask()) {
 			content += " " + skill;
@@ -411,6 +482,12 @@ public class Coordinator extends Agent{
 		return message;
 	}
 	
+	/**
+	 * Gets all the candidate collaborators of a given task from a collaborators list.
+	 * @param data The original collaborators list.
+	 * @param t The task.
+	 * @return The candidates list.
+	 */
 	public List<CollaboratorData> getCandidateColaborators(List<CollaboratorData> data, Task t) {
 		ArrayList<CollaboratorData> candidates = new ArrayList<CollaboratorData>();
 		for (int i = 0; i < data.size(); i++) {
@@ -425,6 +502,11 @@ public class Coordinator extends Agent{
 		return collaboratorsData;
 	}
 	
+	/**
+	 * Gets a collaborator by AID.
+	 * @param aid The collaborator AID.
+	 * @return The collaborator.
+	 */
 	public CollaboratorData getCollaboratorDataByAID(AID aid) {
 		for (int i = 0; i < collaboratorsData.size(); i++) {
 			if(collaboratorsData.get(i).equals(aid)) {
@@ -442,6 +524,10 @@ public class Coordinator extends Agent{
 		this.myCollaborators.add(myCollaborator);
 	}
 	
+	/**
+	 * Searches for all the collaborators in the network.
+	 * @return list of all the collaborators.
+	 */
 	private List<CollaboratorData> getDFCollaborators() {
 	  	List<CollaboratorData> collaborators = new ArrayList<CollaboratorData>();
 	  	try {
@@ -477,6 +563,10 @@ public class Coordinator extends Agent{
 	  	return collaborators;
 	}
 	
+	/**
+	 *  Builds the search message to send to the DF agent for searching for
+	 *  'collaborator' services.
+	 */
 	private void buildSearchMessage() {
 		DFAgentDescription template = new DFAgentDescription();
 		ServiceDescription templateSd = new ServiceDescription();
@@ -487,6 +577,10 @@ public class Coordinator extends Agent{
 		searchMessage = DFService.createSubscriptionMessage(this, getDefaultDF(), template, sc);
 	}
 	
+	/**
+	 *  Subscribes to a 'collaborator' service so that new collaborator agents can
+	 *  inserted in the contacts list.
+	 */
 	private void subscribe() {
 		addBehaviour(new SubscriptionInitiator(this, searchMessage) {
 			protected void handleInform(ACLMessage inform) {

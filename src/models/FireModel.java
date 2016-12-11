@@ -84,23 +84,27 @@ public class FireModel implements Model {
 		double trust = 0;
 		ArrayList<Interaction> interactions = getInteractionsByCollaboratorById(aid, type);
 		ArrayList<Long> times = new ArrayList<Long>();
-		long first = interactions.get(interactions.size() - 1).time;
-		long totalSum = 0;
-		if(interactions.size() > 1) {
-			for (int i = 0; i < interactions.size(); i++) {
-				long t = interactions.get(i).time - first;
-				times.add(t);
-				totalSum += t;
+		if(interactions.size() > 0) {
+			long first = interactions.get(interactions.size() - 1).time;
+			long totalSum = 0;
+			if(interactions.size() > 1) {
+				for (int i = 0; i < interactions.size(); i++) {
+					long t = interactions.get(i).time - first;
+					times.add(t);
+					totalSum += t;
+				}
+				for (int i = 0; i < interactions.size(); i++) {
+					trust += (times.get(i)/(totalSum*1.0f)) * interactions.get(i).rating;
+				}
+			} else {
+				trust = interactions.get(0).rating;
 			}
-			for (int i = 0; i < interactions.size(); i++) {
-				trust += (times.get(i)/(totalSum*1.0f)) * interactions.get(i).rating;
+			// Only here to provide a security check
+			if(trust > 1.0d) {
+				trust = 1.0d;
 			}
 		} else {
-			trust = interactions.get(0).rating;
-		}
-		// Only here to provide a security check
-		if(trust > 1.0d) {
-			trust = 1.0d;
+			trust = 0;
 		}
 		return trust;
 	}
