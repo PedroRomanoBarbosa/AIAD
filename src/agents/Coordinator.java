@@ -59,7 +59,15 @@ public class Coordinator extends Agent {
 	// Test variables
 	private int numberOfProjects = 2;
 	private int projectIndex = 0;
-
+	
+	private String coord_id;
+	
+	public void setId(String id){
+		coord_id = id;
+	}
+	public String getId(){
+		return coord_id;
+	}
 	/**
 	 * Method before the agent runs. Initializes most fields and creates 
 	 * all the behaviours needed and launches the startup ones.

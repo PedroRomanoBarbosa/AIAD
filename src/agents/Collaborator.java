@@ -64,6 +64,10 @@ public class Collaborator extends Agent {
 	public String getId(){
 		return coll_id;
 	}
+	
+	public AID getCurrentCoordinator() {
+		return currentCoordinator;
+	}
 
 	/**
 	 * Method before the agent runs. Initializes most fields and creates 

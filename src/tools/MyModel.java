@@ -43,6 +43,7 @@ import uchicago.src.sim.engine.SimModelImpl;
 import uchicago.src.sim.engine.SimpleModel;
 import uchicago.src.sim.gui.CircularGraphLayout;
 import uchicago.src.sim.gui.DisplaySurface;
+import uchicago.src.sim.gui.DrawableEdge;
 import uchicago.src.sim.gui.Network2DDisplay;
 import uchicago.src.sim.gui.Object2DDisplay;
 import uchicago.src.sim.gui.OvalNetworkItem;
@@ -68,7 +69,7 @@ public class MyModel extends SimModelImpl{
 	private String coordinator;
 	private static Coordinator coord;
 	ArrayList<Collaborator> myCollaboratorsAgents;
-	Coordinator myCoordinatorAgent;
+	ArrayList<Coordinator> myCoordinatorAgent;
 	
 	private static Runtime rt;
 	private static Profile p;
@@ -81,6 +82,7 @@ public class MyModel extends SimModelImpl{
 		
 		parser = new Parser();
 		myCollaboratorsAgents = new ArrayList<Collaborator>();
+		myCoordinatorAgent = new ArrayList<Coordinator>();
 	}
 	
 	@Override
@@ -118,11 +120,11 @@ public class MyModel extends SimModelImpl{
 		this.myCollaboratorsAgents.add(myCollaborator);
 	}
 	
-	public void setMyCoordinator(Coordinator coord){
-		this.myCoordinatorAgent = coord;
+	public void addMyCoordinator(Coordinator coord){
+		this.myCoordinatorAgent.add(coord);
 	}
 	
-	public Coordinator getMycoordinator() {
+	public ArrayList<Coordinator> getMycoordinator() {
 		return this.myCoordinatorAgent;
 	}
 
@@ -231,7 +233,7 @@ public class MyModel extends SimModelImpl{
 	public void buildModel(){
 		agentList = new ArrayList<DefaultDrawableNode>();
 		
-		
+		// TODO
 		// creates DefaultNodes and adds them to a list
 		OvalNetworkItem item_coord = new OvalNetworkItem(xSize/2, 10);
 		item_coord.setColor(Color.blue);
@@ -264,12 +266,19 @@ public class MyModel extends SimModelImpl{
 
 	    // iterate through the agentList creating edges between 
 	    // the current node and the previous node.
+		
 		Node nodeC = (Node)agentList.get(0);
+		ArrayList<DefaultDrawableEdge> edges;
 	    for (int i = 1; i < agentList.size(); i++) {
 	    	Node node = (Node)agentList.get(i);
 	    	//EdgeFactory.createEdge(nodeC, node);
 	    	EdgeFactory.createDrawableEdge(nodeC, node);
+	    	edges = nodeC.getOutEdges();
+	    	for (int j = 0; j < edges.size(); j++) {
+				edges.get(j).setColor(Color.black);
+			}
 	    }
+	    
 	 
 	}
 	
@@ -389,8 +398,8 @@ public class MyModel extends SimModelImpl{
 			coord.addTask(myTask);
 		}
 		System.out.println("TASKS with precedencies and skills ADDED TO COORDINATOR");
-		
-		setMyCoordinator(coord);
+		coord.setId(parser.getCoordinator());
+		addMyCoordinator(coord);
 		return 0;
 	}
 	
@@ -444,11 +453,36 @@ public class MyModel extends SimModelImpl{
 		      }
 	    }
 		*/
+		
+		class ShowEdges extends BasicAction {
+
+			@Override
+			public void execute() {
+				DefaultDrawableNode colNode;
+				DefaultDrawableNode coordNode = agentList.get(0);
+				System.out.println("LABEL "+coordNode.getNodeLabel());
+				System.out.println("EDGES "+coordNode.getOutEdges().size());
+				System.out.println("OUT NODES:");
+				for (int i = 0; i < coordNode.getOutNodes().size(); i++) {
+					colNode = (DefaultDrawableNode) coordNode.getOutNodes().get(i);
+					System.out.println("\t"+colNode.getNodeLabel());
+					if (colNode.getNodeLabel().equals("col01")) {
+						DrawableEdge edge = (DrawableEdge) colNode.getInEdges().get(0);
+						System.out.println("AQUI "+edge.getFrom().getNodeLabel());
+						//colNode.getInEdges().clear();
+						colNode.clearInEdges();
+					}
+				}
+			}
+			
+		}
+		
 		//schedule.scheduleActionBeginning(0, new MainAction());
 		schedule.scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
 		schedule.scheduleActionAtInterval(1, plot, "step", Schedule.LAST);
 		//schedule.scheduleActionAtInterval(100, new DummyPrint(), Schedule.LAST);
-		schedule.scheduleActionAtInterval(100, new ChangeAgentsColor(), Schedule.INTERVAL_UPDATER);
+		schedule.scheduleActionAtInterval(1, new ChangeEdgesColor(), Schedule.LAST);
+		schedule.scheduleActionAtInterval(1, new ChangeAgentsColor(), Schedule.LAST);
 	}
 	
 	
@@ -471,6 +505,49 @@ public class MyModel extends SimModelImpl{
 					}
 				}
 			}			
+		}
+	};
+	
+	
+	class ChangeEdgesColor extends BasicAction {
+		DefaultDrawableEdge colEdge;
+		ArrayList<DefaultDrawableEdge> colEdges;
+		DefaultDrawableNode colNode;
+		Collaborator col;
+		
+		@Override
+		public void execute() {
+			
+				for (int i = 0; i < agentList.size(); i++) {
+					for (int j = 0; j < myCollaboratorsAgents.size(); j++) {
+						col = myCollaboratorsAgents.get(j);
+						if (agentList.get(i).getNodeLabel().equals(col.getId())) {
+							colNode = agentList.get(i);
+							if (col.isOcuppied()) {
+								//System.out.println("ESTOU OCUPADO "+col.getId());
+								colEdges = colNode.getInEdges();
+								for (int m = 0; m < colEdges.size(); m++) {
+									colEdge = colEdges.get(m);
+									//System.out.println("OTHER NODE "+colEdge.getFrom().getNodeLabel()+"; "+col.getCurrentCoordinator().getLocalName());
+									if (colEdge.getFrom().getNodeLabel().equals(col.getCurrentCoordinator().getLocalName())) {
+										colEdge.setColor(Color.red);
+									}
+									else{
+										colEdge.setColor(Color.black);
+									}
+								}
+								
+							}
+							else {
+								colEdges = colNode.getInEdges();
+								for (int n = 0; n < colEdges.size(); n++) {
+									colEdges.get(n).setColor(Color.black);
+								}
+							}
+						}
+					}
+				}
+			
 		}
 	};
 }
