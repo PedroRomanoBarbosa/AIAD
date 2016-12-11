@@ -29,6 +29,7 @@ public class Collaborator extends Agent {
 	
 	// Used when agreeing and doing a task
 	private String currentTask; // The current task this collaborator is doing
+	private String currentTaskType;
 	private AID currentCoordinator;
 	private long currentTaskTime;
 	private long currentTaskFinalTime;
@@ -89,9 +90,10 @@ public class Collaborator extends Agent {
 						ACLMessage agree = request.createReply();
 						agree.setPerformative(ACLMessage.AGREE);
 						currentTask = args[1];
-						currentTaskTime = Long.parseLong(args[2]);
+						currentTaskType = args[2];
+						currentTaskTime = Long.parseLong(args[3]);
 						skillsForCurrentTask = new ArrayList<String>();
-						for (int i = 3; i < args.length; i++) {
+						for (int i = 4; i < args.length; i++) {
 							skillsForCurrentTask.add(args[i]);
 						}
 						currentCoordinator = request.getSender();
@@ -122,7 +124,7 @@ public class Collaborator extends Agent {
 					
 				};
 				ACLMessage inform = request.createReply();
-				inform.setContent("ASSIGNED " + currentTask);
+				inform.setContent("ASSIGNED " + currentTask + " " + currentTaskType);
 				inform.setPerformative(ACLMessage.INFORM);
 				
 				addBehaviour(doingTaskBehaviour);
@@ -150,7 +152,7 @@ public class Collaborator extends Agent {
 	 */
 	public void notifyCoordinator(AID coord) {
 		ACLMessage message = new ACLMessage(ACLMessage.INFORM);
-		message.setContent("DONE " + currentTask);
+		message.setContent("DONE " + currentTask + " " + currentTaskType);
 		message.addReceiver(coord);
 		send(message);
 	}
