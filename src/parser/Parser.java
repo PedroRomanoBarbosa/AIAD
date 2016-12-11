@@ -19,6 +19,7 @@ public class Parser {
 	private ArrayList<String> project_tasks;
 	private HashMap<String,HashMap<String,Float>> collaborators = new HashMap<String,HashMap<String,Float>>();
 	private HashMap<String, List<String>> taskSkills = new HashMap<String, List<String>>();
+	private HashMap<String, String> taskType = new HashMap<String, String>();
 	private HashMap<String, List<String>> taskPrecs = new HashMap<String, List<String>>();
 	
 	// TODO: consider project id
@@ -79,6 +80,14 @@ public class Parser {
 		return taskPrecs;
 	}
 	
+	public HashMap<String, String> getTaskType() {
+		return taskType;
+	}
+
+	public void addTaskType(String task, String type) {
+		this.taskType.put(task, type);
+	}
+	
 
 	public void execute(File inputFile) {
 		Node node;
@@ -121,8 +130,8 @@ public class Parser {
 	}
 	
 	public void parseProject(Node project){
-		Node node, nnode, nnnode;
-		NodeList projectChild, nodeChild, nnodeChild;
+		Node node, nnode;
+		NodeList projectChild, nodeChild;
 		ArrayList<String> tasks = new ArrayList<String>();
 		
 		// MODEL
@@ -203,7 +212,7 @@ public class Parser {
 	public void parseTasks(Node node){
 		Node nnode, nnnode, nnnnode;
 		NodeList nodeChild, nnodeChild, nnnodeChild;
-		String task;
+		String task, type;
 		ArrayList<String> skills = new ArrayList<String>();
 		ArrayList<String> precTasks = new ArrayList<String>();
 		
@@ -212,6 +221,8 @@ public class Parser {
 			nnode = nodeChild.item(i);
 			if (nnode.getNodeType() == Node.ELEMENT_NODE) {
 				task = nnode.getAttributes().getNamedItem("id").getNodeValue();
+				type = nnode.getAttributes().getNamedItem("type").getNodeValue();
+				addTaskType(task, type);
 				nnodeChild = nnode.getChildNodes();
 				for (int j = 0; j < nnodeChild.getLength(); j++) {
 					nnnode = nnodeChild.item(j);
@@ -241,6 +252,7 @@ public class Parser {
 				}
 			}
 		}
+		System.out.println("\t\ttype: "+getTaskType());
 		System.out.println("\t\tskills: "+getTaskSkills());
 		System.out.println("\t\ttasks: "+getTaskPrecs());
 	}
@@ -248,6 +260,5 @@ public class Parser {
 	public static void errorMsg(String msg){
 		System.out.println("ERROR: "+msg);
 	}
-	
 
 }
