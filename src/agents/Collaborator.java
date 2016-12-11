@@ -20,7 +20,7 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
 
-public class Collaborator extends Agent{
+public class Collaborator extends Agent {
 	private static final long serialVersionUID = 1l;
 	private HashMap<String, Float> skills; // skillId -> value(probabilistic)
 	private boolean ocuppied; // Whether this agent is occupied or not
@@ -35,7 +35,7 @@ public class Collaborator extends Agent{
 	private ArrayList<String> skillsForCurrentTask;
 	
 	
-	public Collaborator(){
+	public Collaborator() {
 		skills = new HashMap<String, Float>();
 	}
 	
@@ -88,7 +88,6 @@ public class Collaborator extends Agent{
 						ocuppied = true;
 						ACLMessage agree = request.createReply();
 						agree.setPerformative(ACLMessage.AGREE);
-						// Check task properties
 						currentTask = args[1];
 						currentTaskTime = Long.parseLong(args[2]);
 						skillsForCurrentTask = new ArrayList<String>();
@@ -151,7 +150,7 @@ public class Collaborator extends Agent{
 	 */
 	public void notifyCoordinator(AID coord) {
 		ACLMessage message = new ACLMessage(ACLMessage.INFORM);
-		message.setContent("DONE " + currentTask + " " + currentTaskFinalTime);
+		message.setContent("DONE " + currentTask);
 		message.addReceiver(coord);
 		send(message);
 	}

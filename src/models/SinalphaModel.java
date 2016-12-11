@@ -1,5 +1,7 @@
 package models;
 
+import jade.core.AID;
+
 public class SinalphaModel implements Model{
 	private double start_alpha = (3 * Math.PI) / 2;
 	private int lambda_increase = 1;
@@ -28,5 +30,20 @@ public class SinalphaModel implements Model{
 			this.alpha = 5*Math.PI/2;
 		}
 		return trustworthiness = 0.5 * Math.sin(this.alpha) + 0.5;
+	}
+
+	@Override
+	public void addInteraction(AID coord, AID coll, String type, double rating) {
+		
+	}
+
+	@Override
+	public void print() {
+		
+	}
+
+	@Override
+	public double getCollaboratorTrustByTask(AID aid, String type) {
+		return 0;
 	}
 }

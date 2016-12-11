@@ -16,6 +16,10 @@ public class FireModel implements Model {
 	//private List<Interaction> ratings_database;
 	private double startTime = 0;
 	
+	public FireModel() {
+		database = new ArrayList<Interaction>();
+	}
+	
 	public FireModel(AID coordinatorAID, AID collaboratorAID, int d){
 		database = new ArrayList<Interaction>();
 		this.recency_factor = (- d) / (Math.log(0.5)/Math.log(Math.E)); //TODO remove
@@ -44,7 +48,8 @@ public class FireModel implements Model {
 	 * @param type The type of the task.
 	 * @param rating The rating for the task.
 	 */
-	private void addInteraction(AID coord, AID coll, String type, double rating) {
+	@Override
+	public void addInteraction(AID coord, AID coll, String type, double rating) {
 		Interaction interaction = new Interaction(coord,coll,type,rating,System.nanoTime());
 		database.add(interaction);
 	}
@@ -74,19 +79,24 @@ public class FireModel implements Model {
 	 * @param type The task type.
 	 * @return Trust value.
 	 */
+	@Override
 	public double getCollaboratorTrustByTask(AID aid, String type) {
 		double trust = 0;
 		ArrayList<Interaction> interactions = getInteractionsByCollaboratorById(aid, type);
 		ArrayList<Long> times = new ArrayList<Long>();
-		long first = interactions.get(interactions.size()-1).time;
+		long first = interactions.get(interactions.size() - 1).time;
 		long totalSum = 0;
-		for (int i = 0; i < interactions.size(); i++) {
-			long t = interactions.get(i).time - first;
-			times.add(t);
-			totalSum += t;
-		}
-		for (int i = 0; i < interactions.size(); i++) {
-			trust += times.get(i)/(totalSum*1.0f) * interactions.get(i).rating;
+		if(interactions.size() > 1) {
+			for (int i = 0; i < interactions.size(); i++) {
+				long t = interactions.get(i).time - first;
+				times.add(t);
+				totalSum += t;
+			}
+			for (int i = 0; i < interactions.size(); i++) {
+				trust += (times.get(i)/(totalSum*1.0f)) * interactions.get(i).rating;
+			}
+		} else {
+			trust = interactions.get(0).rating;
 		}
 		// Only here to provide a security check
 		if(trust > 1.0d) {
@@ -104,11 +114,23 @@ public class FireModel implements Model {
 		ArrayList<Interaction> results = new ArrayList<Interaction>();
 		for (int i = 0; i < database.size(); i++) {
 			Interaction interaction = database.get(i);
-			if(interaction.collaboratorAID.equals(aid) && interaction.taskType.equals(type)) {
+			if(interaction.collaboratorAID.equals(aid) && interaction.type.equals(type)) {
 				results.add(interaction);
 			}
 		}
 		return results;
+	}
+
+	@Override
+	public void print() {
+		for (int i = 0; i < database.size(); i++) {
+			Interaction interaction = database.get(i);
+			System.out.println(interaction.interaction_id + 
+					" - " + interaction.type + 
+					" | " + interaction.coordinatorAID.getLocalName() +
+					" | " + interaction.collaboratorAID.getLocalName() +
+					" | " + interaction.rating);
+		}
 	}
 
 }
