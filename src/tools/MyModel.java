@@ -53,16 +53,17 @@ public class MyModel extends SimpleModel{
 	public static final int ALWAYS_DEFECT = 1; 
 	private int p1Strategy = TIT_FOR_TAT; 
 	private int p2Strategy = ALWAYS_DEFECT;
+	
 	private DisplaySurface dsurf;
 	private OpenSequenceGraph plot;
+	private int xSize, ySize;
+	private ArrayList<DefaultDrawableNode> agentList;
+	
 	private static Parser parser;
 	private File ficheiro;
 	private int numAgents, numAgentsCoord, numAgentsCol;
 	private HashMap<String,HashMap<String,Float>> myCollaborators;
-	private int xSize, ySize;
-	private ArrayList<DefaultDrawableNode> agentList;
 	private String coordinator;
-	
 	private static Coordinator coord;
 	private ArrayList<Collaborator> colls;
 	
@@ -373,12 +374,11 @@ public class MyModel extends SimpleModel{
 		ArrayList<String> collaborators = parser.getProjectCollaborators();
 		HashMap<String,HashMap<String,Float>> myCollaborators;
 		
-		System.out.println("aqui " +collaborators.size());
 		
 		myCollaborators = parser.getCollaborators();
 		for (String coll_id : myCollaborators.keySet()) {
 			col = new Collaborator();
-			col.setId(coll_id);
+			//col.setId(coll_id);
 			
 			//System.out.println(coll_id);
 			
