@@ -28,6 +28,7 @@
     </collaborator>
 
     <collaborator id='col02'>
+      <skillProb skill='s04' prob='.1'/>
       <skillProb skill='s06' prob='.1'/>
       <skillProb skill='s07' prob='.2'/>
       <skillProb skill='s08' prob='.3'/>
@@ -42,6 +43,7 @@
     </collaborator>
 
     <collaborator id='col03'>
+      <skillProb skill='s06' prob='.1'/>
       <skillProb skill='s12' prob='.2'/>
       <skillProb skill='s13' prob='.3'/>
       <skillProb skill='s14' prob='.4'/>
@@ -59,111 +61,79 @@
   </collaborators>
 
   <tasks>
-    <task id='t01' type='c01'>
+    <task id='t01' type='c01' time='1000'>
       <skills>
         <skill name='s01' />
         <skill name='s07' />
-        <skill name='s11' />
-        <skill name='s13' />
-        <skill name='s17' />
-        <skill name='s19' />
       </skills>
       <tasks>
       </tasks>
     </task>
 
-    <task id='t02' type='c02'>
+    <task id='t02' type='c02' time='2000'>
       <skills>
         <skill name='s02' />
-        <skill name='s04' />
-        <skill name='s06' />
-        <skill name='s08' />
-        <skill name='s10' />
-        <skill name='s12' />
-        <skill name='s14' />
-        <skill name='s16' />
-        <skill name='s18' />
-        <skill name='s20' />
       </skills>
       <tasks>
           <task id='t06' />
       </tasks>
     </task>
 
-    <task id='t03' type='c03'>
+    <task id='t03' type='c03' time='3000'>
       <skills>
         <skill name='s03' />
-        <skill name='s06' />
-        <skill name='s09' />
-        <skill name='s12' />
-        <skill name='s15' />
-        <skill name='s18' />
       </skills>
       <tasks>
       </tasks>
     </task>
 
-    <task id='t04' type='c02'>
+    <task id='t04' type='c02' time='2000'>
       <skills>
         <skill name='s04' />
-        <skill name='s08' />
-        <skill name='s12' />
-        <skill name='s16' />
-        <skill name='s20' />
       </skills>
       <tasks>
       </tasks>
     </task>
 
-    <task id='t05' type='c05'>
+    <task id='t05' type='c05' time='5000'>
       <skills>
         <skill name='s05' />
-        <skill name='s10' />
-        <skill name='s15' />
-        <skill name='s20' />
       </skills>
       <tasks>
       </tasks>
     </task>
 
-    <task id='t06' type='c03'>
+    <task id='t06' type='c03' time='3000'>
       <skills>
         <skill name='s06' />
-        <skill name='s12' />
-        <skill name='s18' />
       </skills>
       <tasks>
       </tasks>
     </task>
 
-    <task id='t07' type='c01'>
+    <task id='t07' type='c01' time='1000'>
       <skills>
         <skill name='s07' />
-        <skill name='s14' />
       </skills>
       <tasks>
       </tasks>
     </task>
 
-    <task id='t09' type='c01'>
+    <task id='t09' type='c01' time='1000'>
       <skills>
         <skill name='s09' />
-        <skill name='s18' />
       </skills>
       <tasks>
       </tasks>
     </task>
 
-    <task id='t10' type='c02'>
+    <task id='t10' type='c02' time='2000'>
       <skills>
-        <skill name='s10' />
-        <skill name='s20' />
+        <skill name='s02' />
       </skills>
       <tasks>
       </tasks>
     </task>
   </tasks>
-
-
 
 </scenario>

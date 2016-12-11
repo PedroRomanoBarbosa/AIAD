@@ -75,7 +75,7 @@ public class Coordinator extends Agent{
 		Task task = new Task("ID0", 2000);
 		task.setSkillsToPerformTask(skills);
 		tasksList.add(task);
-		*/
+		
 		
 		List<String> skills2 = new ArrayList<String>();
 		skills2.add("skill1");
@@ -104,7 +104,7 @@ public class Coordinator extends Agent{
 		Task task5 = new Task("ID4","CONTACT" , 2000);
 		task5.setSkillsToPerformTask(skills5);
 		tasksList.add(task5);
-		
+		*/
 		// Create Behaviours
 		createStartProjectBehaviour();
 		createAssignTaskBehaviour();
@@ -516,13 +516,7 @@ public class Coordinator extends Agent{
 		return null;
 	}
 	
-	public ArrayList<Collaborator> getMyCollaborators() {
-		return myCollaborators;
-	}
-
-	public void addMyCollaborators(Collaborator myCollaborator) {
-		this.myCollaborators.add(myCollaborator);
-	}
+	
 	
 	/**
 	 * Searches for all the collaborators in the network.
@@ -552,7 +546,6 @@ public class Coordinator extends Agent{
   							Float value = Float.parseFloat((String)p.getValue());
   							cd.addSkill(p.getName(), value);
   						}
-  						collaborators.add(cd);
   					}
   				}
   			}

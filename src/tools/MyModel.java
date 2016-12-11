@@ -19,6 +19,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.plaf.basic.BasicTabbedPaneUI.TabSelectionHandler;
 import javax.swing.JFileChooser.*;
 
 
@@ -66,6 +67,7 @@ public class MyModel extends SimModelImpl{
 	private HashMap<String,HashMap<String,Float>> myCollaborators;
 	private String coordinator;
 	private static Coordinator coord;
+	ArrayList<Collaborator> myCollaboratorsAgents;
 	
 	private static Runtime rt;
 	private static Profile p;
@@ -103,6 +105,14 @@ public class MyModel extends SimModelImpl{
 
 	public void setNumberOfAgents(int numberOfAgents) {
 		this.numAgents = numberOfAgents;
+	}
+	
+	public ArrayList<Collaborator> getMyCollaborators() {
+		return myCollaboratorsAgents;
+	}
+
+	public void addMyCollaborators(Collaborator myCollaborator) {
+		this.myCollaboratorsAgents.add(myCollaborator);
 	}
 
 	
@@ -318,17 +328,20 @@ public class MyModel extends SimModelImpl{
 		init.loadModel(new MyModel(), null, false);
 	}
 	
-	public static void initAgents() {
+	public void initAgents() {
 		initCoordinator();
 		initCollaborators();
 	}
 	
-	public static int initCoordinator(){
+	public int initCoordinator(){
 		HashMap<String, List<String>> taskSkills;
 		HashMap<String, List<String>> taskPrecs;
+		HashMap<String, String[]> taskType;
+		String[] taskTypeTemp;
 		List<String> skills;
 		List<String> precs;
-		String task;
+		String task, type;
+		long duration;
 		Task myTask = null;
 		AgentController coordinatorAgent = null;
 		
@@ -360,9 +373,18 @@ public class MyModel extends SimModelImpl{
 			precs = taskPrecs.get(task);
 			//System.out.println(precs);
 			
+			taskType = parser.getTaskType();
+			//System.out.println(taskType);
+			taskTypeTemp = taskType.get(task);
+			type = taskTypeTemp[0];
+			duration =  Long.parseLong(taskTypeTemp[1]);
+			
+			
 			
 			myTask = new Task(task, precs);
 			myTask.setSkillsToPerformTask(skills);
+			myTask.setTaskType(type);
+			myTask.setNormalDuration(duration);
 			//System.out.println(myTask.getSkillsToPerformTask());
 			//System.out.println(myTask.getPrecedences());
 			
@@ -374,7 +396,7 @@ public class MyModel extends SimModelImpl{
 		return 0;
 	}
 	
-	public static void initCollaborators(){
+	public void initCollaborators(){
 		Collaborator col;
 		AgentController collaboratorAgent;
 //		ArrayList<String> collaborators = parser.getProjectCollaborators();
@@ -388,7 +410,7 @@ public class MyModel extends SimModelImpl{
 			
 			//System.out.println(coll_id);
 			
-			coord.addMyCollaborators(col);		// check if needed
+			addMyCollaborators(col);		// check if needed
 			
 			// ADD SKILLS
 			col.setSkills(myCollaborators.get(coll_id));

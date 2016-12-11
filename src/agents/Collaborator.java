@@ -58,7 +58,7 @@ public class Collaborator extends Agent {
 	 */
 	@Override
 	protected void setup() {
-		skills = new HashMap<String, Float>();
+		//skills = new HashMap<String, Float>();
 		requested = new ArrayList<AID>();
 		ocuppied = false;
 		

@@ -40,8 +40,16 @@ public class Task implements Comparable<Task>{
 		return taskType;
 	}
 
+	public void setTaskType(String type) {
+		taskType = type;
+	}	
+	
 	public long getNormalDuration() {
 		return normalDuration;
+	}
+	
+	public void setNormalDuration(long duration){
+		normalDuration = duration;
 	}
 	
 	public void setStartTime(long time) {
