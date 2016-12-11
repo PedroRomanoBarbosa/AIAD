@@ -35,7 +35,6 @@ public class Coordinator extends Agent {
 	
 	// Project Meta Information
 	private Model model; // The trust model chosen
-	private String modelName; // The name of the trust model
 	private boolean hasModel; // If this coordinator has a trust model
 	private ArrayList<Collaborator> myCollaborators = new ArrayList<Collaborator>();
 	private List<CollaboratorData> collaboratorsData; //
@@ -60,8 +59,27 @@ public class Coordinator extends Agent {
 	
 	// Test variables
 	private int numberOfProjects = MetaData.numberOfProjects;
+	private String modelName; // The name of the trust model
 	private int projectIndex = 0;
-
+	
+	private String coord_id;
+	private int tasksDone = 0;
+	
+	public void setId(String id){
+		coord_id = id;
+	}
+	public String getId(){
+		return coord_id;
+	}
+	
+	public int getDoneTasks(){
+		return tasksList.size()-tasksDone;
+	}
+	
+	public void setModel(String name) {
+		modelName = name;
+	}
+	
 	/**
 	 * Method before the agent runs. Initializes most fields and creates 
 	 * all the behaviours needed and launches the startup ones.
@@ -71,6 +89,65 @@ public class Coordinator extends Agent {
 		tasksList = new ArrayList<Task>();
 		collaboratorsData = new ArrayList<CollaboratorData>();
 		projectFinished = false;
+		model = new FireModel();
+		
+		//Tests
+		/*
+		List<String> skills = new ArrayList<String>();
+		skills.add("skill1");
+		skills.add("skill2");
+		List<String> dep = new ArrayList<String>();
+		dep.add("ID1");
+		Task task = new Task("ID0", 2000);
+		task.setSkillsToPerformTask(skills);
+		tasksList.add(task);
+		
+		
+		List<String> skills2 = new ArrayList<String>();
+		skills2.add("skill1");
+		skills2.add("skill2");
+		Task task2 = new Task("ID1", "CONTACT", 2000);
+		task2.setSkillsToPerformTask(skills2);
+		tasksList.add(task2);
+		
+		List<String> skills3 = new ArrayList<String>();
+		skills3.add("skill1");
+		skills3.add("skill2");
+		Task task3 = new Task("ID2", "CONTACT", 2000);
+		task3.setSkillsToPerformTask(skills3);
+		tasksList.add(task3);
+		
+		
+		
+		List<String> skills5 = new ArrayList<String>();
+		skills5.add("skill1");
+		skills5.add("skill2");
+		Task task5 = new Task("ID4","CONTACT" , 2000);
+		task5.setSkillsToPerformTask(skills5);
+		tasksList.add(task5);
+		
+	
+		// Tests
+		for (int i = 0; i < 6; i++) {
+			List<String> skills = new ArrayList<String>();
+			skills.add("organize");
+			Task task = new Task("ID" + i, "ORGANIZE", 2000);
+			task.setSkillsToPerformTask(skills);
+			tasksList.add(task);
+		}
+		*/
+		// Set the trust model
+		/*
+		String modelName = "FIRE";
+		hasModel = true;
+		if(modelName.equals("FIRE")) {
+			model = new FireModel();
+		} else if(modelName.equals("SINALPHA")) {
+			model = new SinalphaModel();
+		} else {
+			hasModel = false;
+		}
+		*/
 		
 		// Set the trust model
 		hasModel = true;
@@ -87,19 +164,9 @@ public class Coordinator extends Agent {
 			hasModel = false;
 		}
 		
-	
-		// Tests
-		for (int i = 0; i < 6; i++) {
-			List<String> skills = new ArrayList<String>();
-			skills.add("organize");
-			Task task = new Task("ID" + i, "ORGANIZE", 2000);
-			task.setSkillsToPerformTask(skills);
-			tasksList.add(task);
-		}
-		
 		// Create Behaviours
 		createStartProjectBehaviour();
-		createAssignTaskBehaviour();
+		createAssignTaskBehaviour(); 
 		createRecieveMessageBehaviour();
 		createRecieveTaskDoneBehaviour();
 		
@@ -113,10 +180,6 @@ public class Coordinator extends Agent {
 	
 	public void addTask(Task task){
 		tasksList.add(task);
-	}
-	
-	public void setModel(String name) {
-		modelName = name;
 	}
 	
 	/**
@@ -198,6 +261,7 @@ public class Coordinator extends Agent {
 						if(tasksList.get(i).getTaskId().equals(args[1])) {
 							Task task = tasksList.get(i);
 							task.done();
+							tasksDone++;
 							long duration = System.nanoTime() - task.getStartTime();
 							double rating = calculateRating(task.getNormalDuration(), duration/1000000l);
 							if(hasModel) {
@@ -215,7 +279,7 @@ public class Coordinator extends Agent {
 								System.out.println();
 								projectFinished = true;
 								
-								// TESTING //TODO Remove
+								// TESTING
 								projectIndex++;
 								if(projectIndex < numberOfProjects) {
 									addNewProjectBehaviour();
@@ -566,13 +630,7 @@ public class Coordinator extends Agent {
 		return null;
 	}
 	
-	public ArrayList<Collaborator> getMyCollaborators() {
-		return myCollaborators;
-	}
-
-	public void addMyCollaborators(Collaborator myCollaborator) {
-		this.myCollaborators.add(myCollaborator);
-	}
+	
 	
 	/**
 	 * Searches for all the collaborators in the network.
@@ -602,7 +660,6 @@ public class Coordinator extends Agent {
   							Float value = Float.parseFloat((String)p.getValue());
   							cd.addSkill(p.getName(), value);
   						}
-  						collaborators.add(cd);
   					}
   				}
   			}
@@ -687,6 +744,10 @@ public class Coordinator extends Agent {
 			rating = -1.0d;
 		}
 		return rating;
+	}
+	
+	public void step(){
+		System.out.println("COORDINATOR STEP");
 	}
 	
 }

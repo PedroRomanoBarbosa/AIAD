@@ -35,6 +35,8 @@ public class Collaborator extends Agent {
 	private long currentTaskFinalTime;
 	private ArrayList<String> skillsForCurrentTask;
 	
+	private String coll_id;
+	
 	
 	public Collaborator() {
 		skills = new HashMap<String, Float>();
@@ -51,6 +53,21 @@ public class Collaborator extends Agent {
 	public void setSkills(HashMap<String, Float> skills) {
 		this.skills = skills;
 	}
+	
+	public boolean isOcuppied() {
+		return ocuppied;
+	}
+	
+	public void setId(String id){
+		coll_id = id;
+	}
+	public String getId(){
+		return coll_id;
+	}
+	
+	public AID getCurrentCoordinator() {
+		return currentCoordinator;
+	}
 
 	/**
 	 * Method before the agent runs. Initializes most fields and creates 
@@ -58,7 +75,7 @@ public class Collaborator extends Agent {
 	 */
 	@Override
 	protected void setup() {
-		skills = new HashMap<String, Float>();
+		//skills = new HashMap<String, Float>();
 		requested = new ArrayList<AID>();
 		ocuppied = false;
 		
@@ -198,6 +215,10 @@ public class Collaborator extends Agent {
 		} catch (FIPAException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public void step(){
+		System.out.println("COLABORATOR " +getName()+ " STEP");
 	}
 	
 }

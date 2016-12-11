@@ -19,7 +19,7 @@ public class Parser {
 	private ArrayList<String> project_tasks;
 	private HashMap<String,HashMap<String,Float>> collaborators = new HashMap<String,HashMap<String,Float>>();
 	private HashMap<String, List<String>> taskSkills = new HashMap<String, List<String>>();
-	private HashMap<String, String> taskType = new HashMap<String, String>();
+	private HashMap<String, String[]> taskType = new HashMap<String, String[]>();
 	private HashMap<String, List<String>> taskPrecs = new HashMap<String, List<String>>();
 	
 	// TODO: consider project id
@@ -80,12 +80,13 @@ public class Parser {
 		return taskPrecs;
 	}
 	
-	public HashMap<String, String> getTaskType() {
+	public HashMap<String, String[]> getTaskType() {
 		return taskType;
 	}
 
-	public void addTaskType(String task, String type) {
-		this.taskType.put(task, type);
+	public void addTaskType(String task, String type, String time) {
+		String[] temp = {type, time};
+		this.taskType.put(task, temp);
 	}
 	
 
@@ -213,6 +214,7 @@ public class Parser {
 		Node nnode, nnnode, nnnnode;
 		NodeList nodeChild, nnodeChild, nnnodeChild;
 		String task, type;
+		String time;
 		ArrayList<String> skills = new ArrayList<String>();
 		ArrayList<String> precTasks = new ArrayList<String>();
 		
@@ -222,7 +224,8 @@ public class Parser {
 			if (nnode.getNodeType() == Node.ELEMENT_NODE) {
 				task = nnode.getAttributes().getNamedItem("id").getNodeValue();
 				type = nnode.getAttributes().getNamedItem("type").getNodeValue();
-				addTaskType(task, type);
+				time = nnode.getAttributes().getNamedItem("time").getNodeValue();
+				addTaskType(task, type,time);
 				nnodeChild = nnode.getChildNodes();
 				for (int j = 0; j < nnodeChild.getLength(); j++) {
 					nnnode = nnodeChild.item(j);

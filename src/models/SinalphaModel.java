@@ -54,7 +54,7 @@ public class SinalphaModel implements Model{
 		
 		double trust = 0.5d * Math.sin(newAlpha) + 0.5d;
 		interaction.alpha = newAlpha;
-		interaction.trust = 1d - trust;
+		interaction.trust = trust;
 	}
 
 	/**

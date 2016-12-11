@@ -13,3 +13,5 @@ hs_err_pid*
 #OSX
 .DS_Store
 /bin/
+APDescription.txt
+MTPs-Main-Container.txt

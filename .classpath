@@ -3,5 +3,10 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="lib" path="libs/jade.jar"/>
+	<classpathentry kind="lib" path="D:/Documentos/FEUP/AIAD/repast/repastj/repast-demos.jar"/>
+	<classpathentry kind="lib" path="D:/Documentos/FEUP/AIAD/repast/repastj/repastj.jar"/>
+	<classpathentry kind="lib" path="D:/Documentos/FEUP/AIAD/repast/repastj/repastj-test.jar"/>
+	<classpathentry kind="lib" path="D:/Documentos/FEUP/AIAD/repast/repastj/repastpy.jar"/>
+	<classpathentry kind="lib" path="D:/Documentos/FEUP/AIAD/repast/repastj/repastpy-test.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

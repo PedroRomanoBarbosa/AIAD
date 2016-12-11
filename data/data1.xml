@@ -9,8 +9,6 @@
       <task id="t01"/>
       <task id="t03"/>
       <task id="t05"/>
-      <task id="t07"/>
-      <task id="t09"/>
     </tasks>
   </project>
 
@@ -43,6 +41,7 @@
     </collaborator>
 
     <collaborator id='col03'>
+      <skillProb skill='s03' prob='.3'/>
       <skillProb skill='s06' prob='.1'/>
       <skillProb skill='s12' prob='.2'/>
       <skillProb skill='s13' prob='.3'/>

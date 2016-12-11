@@ -19,6 +19,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.plaf.basic.BasicTabbedPaneUI.TabSelectionHandler;
 import javax.swing.JFileChooser.*;
 
 
@@ -42,6 +43,7 @@ import uchicago.src.sim.engine.SimModelImpl;
 import uchicago.src.sim.engine.SimpleModel;
 import uchicago.src.sim.gui.CircularGraphLayout;
 import uchicago.src.sim.gui.DisplaySurface;
+import uchicago.src.sim.gui.DrawableEdge;
 import uchicago.src.sim.gui.Network2DDisplay;
 import uchicago.src.sim.gui.Object2DDisplay;
 import uchicago.src.sim.gui.OvalNetworkItem;
@@ -66,6 +68,8 @@ public class MyModel extends SimModelImpl{
 	private HashMap<String,HashMap<String,Float>> myCollaborators;
 	private String coordinator;
 	private static Coordinator coord;
+	ArrayList<Collaborator> myCollaboratorsAgents;
+	ArrayList<Coordinator> myCoordinatorAgent;
 	
 	private static Runtime rt;
 	private static Profile p;
@@ -77,6 +81,8 @@ public class MyModel extends SimModelImpl{
 		
 		
 		parser = new Parser();
+		myCollaboratorsAgents = new ArrayList<Collaborator>();
+		myCoordinatorAgent = new ArrayList<Coordinator>();
 	}
 	
 	@Override
@@ -103,6 +109,22 @@ public class MyModel extends SimModelImpl{
 
 	public void setNumberOfAgents(int numberOfAgents) {
 		this.numAgents = numberOfAgents;
+	}
+	
+	public ArrayList<Collaborator> getMyCollaborators() {
+		return myCollaboratorsAgents;
+	}
+
+	public void addMyCollaborators(Collaborator myCollaborator) {
+		this.myCollaboratorsAgents.add(myCollaborator);
+	}
+	
+	public void addMyCoordinator(Coordinator coord){
+		this.myCoordinatorAgent.add(coord);
+	}
+	
+	public ArrayList<Coordinator> getMycoordinator() {
+		return this.myCoordinatorAgent;
 	}
 
 	
@@ -210,7 +232,7 @@ public class MyModel extends SimModelImpl{
 	public void buildModel(){
 		agentList = new ArrayList<DefaultDrawableNode>();
 		
-		
+		// TODO
 		// creates DefaultNodes and adds them to a list
 		OvalNetworkItem item_coord = new OvalNetworkItem(xSize/2, 10);
 		item_coord.setColor(Color.blue);
@@ -243,12 +265,19 @@ public class MyModel extends SimModelImpl{
 
 	    // iterate through the agentList creating edges between 
 	    // the current node and the previous node.
+		
 		Node nodeC = (Node)agentList.get(0);
+		ArrayList<DefaultDrawableEdge> edges;
 	    for (int i = 1; i < agentList.size(); i++) {
 	    	Node node = (Node)agentList.get(i);
 	    	//EdgeFactory.createEdge(nodeC, node);
 	    	EdgeFactory.createDrawableEdge(nodeC, node);
+	    	edges = nodeC.getOutEdges();
+	    	for (int j = 0; j < edges.size(); j++) {
+				edges.get(j).setColor(Color.black);
+			}
 	    }
+	    
 	 
 	}
 	
@@ -264,24 +293,28 @@ public class MyModel extends SimModelImpl{
 		c.addPauseListener(layout);
 		c.addExitListener(layout);
 
-		
 		// graph
 		// this is default! TODO
 		if (plot != null) plot.dispose();
-		plot = new OpenSequenceGraph("Colors and Agents", this);
-		plot.setAxisTitles("time", "n");
+		plot = new OpenSequenceGraph("Tasks and Agents", this);
+		plot.setAxisTitles("time", "tasks");
 		// plot number of different existing colors
-		plot.addSequence("Number of colors", new Sequence() {
+		plot.addSequence("tasks done", new Sequence() {
 			public double getSValue() {
-				return 0;
-				//return agentColors.size();
+				
+				if (coord.getDoneTasks() < 0) {
+					return 0;
+				}
+				return coord.getDoneTasks();
+				//return 0;
 			}
 		});
 		// plot number of agents with the most abundant color
+		/*
 		plot.addSequence("Top color", new Sequence() {
 			public double getSValue() {
 				return 0;
-				/*
+				
 				int n = 0;
 				Enumeration<Integer> agentsPerColor = agentColors.elements();
 				while(agentsPerColor.hasMoreElements()) {
@@ -289,50 +322,44 @@ public class MyModel extends SimModelImpl{
 					if(c>n) n=c;
 				}
 				return n;
-				*/
+				
 			}
 		});
+		*/
 		plot.display();
 	}
 	
 
 
 	
-	private void buildSchedule() {
-		schedule.scheduleActionBeginning(0, new MainAction());
-		schedule.scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
-		schedule.scheduleActionAtInterval(1, plot, "step", Schedule.LAST);
-	}
 	
-	
-	class MainAction extends BasicAction {
-
-		public void execute() {
-			
-		}
-
-	}
 	
 	public static void main(String[] args) {
 		SimInit init = new SimInit();
 		init.loadModel(new MyModel(), null, false);
 	}
 	
-	public static void initAgents() {
+	public void initAgents() {
 		initCoordinator();
 		initCollaborators();
 	}
 	
-	public static int initCoordinator(){
+	public int initCoordinator(){
 		HashMap<String, List<String>> taskSkills;
 		HashMap<String, List<String>> taskPrecs;
+		HashMap<String, String[]> taskType;
+		String[] taskTypeTemp;
 		List<String> skills;
 		List<String> precs;
-		String task;
+		String task, type;
+		long duration;
 		Task myTask = null;
 		AgentController coordinatorAgent = null;
 		
 		coord = new Coordinator();
+		coord.setId(coordinator);
+		coord.setModel(parser.getModelName().toUpperCase());
+		System.out.println("MODEL "+parser.getModelName().toUpperCase());
 		
 		// CREATE AGENT COORDINATOR
 		try {
@@ -360,21 +387,30 @@ public class MyModel extends SimModelImpl{
 			precs = taskPrecs.get(task);
 			//System.out.println(precs);
 			
+			taskType = parser.getTaskType();
+			//System.out.println(taskType);
+			taskTypeTemp = taskType.get(task);
+			type = taskTypeTemp[0];
+			duration =  Long.parseLong(taskTypeTemp[1]);
+			
+			
 			
 			myTask = new Task(task, precs);
 			myTask.setSkillsToPerformTask(skills);
+			myTask.setTaskType(type);
+			myTask.setNormalDuration(duration);
 			//System.out.println(myTask.getSkillsToPerformTask());
 			//System.out.println(myTask.getPrecedences());
 			
 			coord.addTask(myTask);
 		}
 		System.out.println("TASKS with precedencies and skills ADDED TO COORDINATOR");
-		
-		
+		coord.setId(parser.getCoordinator());
+		addMyCoordinator(coord);
 		return 0;
 	}
 	
-	public static void initCollaborators(){
+	public void initCollaborators(){
 		Collaborator col;
 		AgentController collaboratorAgent;
 //		ArrayList<String> collaborators = parser.getProjectCollaborators();
@@ -384,11 +420,9 @@ public class MyModel extends SimModelImpl{
 		myCollaborators = parser.getCollaborators();
 		for (String coll_id : myCollaborators.keySet()) {
 			col = new Collaborator();
-			//col.setId(coll_id);
+			col.setId(coll_id);
 			
 			//System.out.println(coll_id);
-			
-			coord.addMyCollaborators(col);		// check if needed
 			
 			// ADD SKILLS
 			col.setSkills(myCollaborators.get(coll_id));
@@ -405,9 +439,122 @@ public class MyModel extends SimModelImpl{
 			} 
 			System.out.println("AGENT COLLABORATOR "+coll_id+" CREATED");
 			
-			
+			addMyCollaborators(col);
 		}
 	}
-
 	
+	/*
+	* ---------------------------- ACTIONS TO PERFORM ----------------------------------------------------
+	* ------------------------------------- & ------------------------------------------------------------
+	* --------------------------------- SCHEDULING -------------------------------------------------------
+	*/
+	
+	private void buildSchedule() {
+		
+		/*
+	    class DummyPrint extends BasicAction {
+	    	public void execute() {
+	    		for (int i = 0; i < agentList.size(); i++) {
+					System.out.println("ALI "+agentList.get(i).getNodeLabel());
+				}
+		      }
+	    }
+		*/
+		
+		class ShowEdges extends BasicAction {
+
+			@Override
+			public void execute() {
+				DefaultDrawableNode colNode;
+				DefaultDrawableNode coordNode = agentList.get(0);
+				System.out.println("LABEL "+coordNode.getNodeLabel());
+				System.out.println("EDGES "+coordNode.getOutEdges().size());
+				System.out.println("OUT NODES:");
+				for (int i = 0; i < coordNode.getOutNodes().size(); i++) {
+					colNode = (DefaultDrawableNode) coordNode.getOutNodes().get(i);
+					System.out.println("\t"+colNode.getNodeLabel());
+					if (colNode.getNodeLabel().equals("col01")) {
+						DrawableEdge edge = (DrawableEdge) colNode.getInEdges().get(0);
+						System.out.println("AQUI "+edge.getFrom().getNodeLabel());
+						//colNode.getInEdges().clear();
+						colNode.clearInEdges();
+					}
+				}
+			}
+			
+		}
+		
+		//schedule.scheduleActionBeginning(0, new MainAction());
+		schedule.scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
+		schedule.scheduleActionAtInterval(1, plot, "step", Schedule.LAST);
+		//schedule.scheduleActionAtInterval(100, new DummyPrint(), Schedule.LAST);
+		schedule.scheduleActionAtInterval(1, new ChangeEdgesColor(), Schedule.LAST);
+		schedule.scheduleActionAtInterval(1, new ChangeAgentsColor(), Schedule.LAST);
+	}
+	
+	
+	class ChangeAgentsColor extends BasicAction {
+
+		@Override
+		public void execute() {
+			for (int i = 0; i < agentList.size(); i++) {
+				for (int j = 0; j < myCollaboratorsAgents.size(); j++) {
+					Collaborator col = myCollaboratorsAgents.get(j);
+					if (col.getId().equals(agentList.get(i).getNodeLabel())) {
+						if (col.isOcuppied()) {
+							agentList.get(i).setColor(Color.red);
+							//System.out.println("--> "+col.getId()+" está OCUPADO");
+						}
+						else{
+							agentList.get(i).setColor(Color.green);
+							//System.out.println("--> "+col.getId()+" está LIVRE");
+						}
+					}
+				}
+			}			
+		}
+	};
+	
+	
+	class ChangeEdgesColor extends BasicAction {
+		DefaultDrawableEdge colEdge;
+		ArrayList<DefaultDrawableEdge> colEdges;
+		DefaultDrawableNode colNode;
+		Collaborator col;
+		
+		@Override
+		public void execute() {
+			
+				for (int i = 0; i < agentList.size(); i++) {
+					for (int j = 0; j < myCollaboratorsAgents.size(); j++) {
+						col = myCollaboratorsAgents.get(j);
+						if (agentList.get(i).getNodeLabel().equals(col.getId())) {
+							colNode = agentList.get(i);
+							if (col.isOcuppied()) {
+								//System.out.println("ESTOU OCUPADO "+col.getId());
+								colEdges = colNode.getInEdges();
+								for (int m = 0; m < colEdges.size(); m++) {
+									colEdge = colEdges.get(m);
+									//System.out.println("OTHER NODE "+colEdge.getFrom().getNodeLabel()+"; "+col.getCurrentCoordinator().getLocalName());
+									if (colEdge.getFrom().getNodeLabel().equals(col.getCurrentCoordinator().getLocalName())) {
+										colEdge.setColor(Color.red);
+									}
+									else{
+										colEdge.setColor(Color.black);
+									}
+								}
+								
+							}
+							else {
+								colEdges = colNode.getInEdges();
+								for (int n = 0; n < colEdges.size(); n++) {
+									colEdges.get(n).setColor(Color.black);
+								}
+							}
+						}
+					}
+				}
+			
+		}
+	};
 }
