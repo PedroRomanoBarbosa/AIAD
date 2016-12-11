@@ -192,7 +192,7 @@ public class Coordinator extends Agent {
 				}));
 				msg = receive(pattern);
 			    if(msg != null) {
-			    	System.out.println(msg.getContent());
+			    	System.out.println("####" + msg.getContent());
 			    	String[] args = msg.getContent().split(" ");
 			    	for (int i = 0; i < tasksList.size(); i++) {
 						if(tasksList.get(i).getTaskId().equals(args[1])) {
