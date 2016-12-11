@@ -130,8 +130,8 @@ public class Parser {
 	}
 	
 	public void parseProject(Node project){
-		Node node, nnode, nnnode;
-		NodeList projectChild, nodeChild, nnodeChild;
+		Node node, nnode;
+		NodeList projectChild, nodeChild;
 		ArrayList<String> tasks = new ArrayList<String>();
 		
 		// MODEL
