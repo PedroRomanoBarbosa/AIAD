@@ -27,12 +27,14 @@ import data.CollaboratorData;
 import data.Task;
 import models.FireModel;
 import models.Model;
+import models.SinalphaModel;
 
-public class Coordinator extends Agent{
+public class Coordinator extends Agent {
 	private static final long serialVersionUID = 1L;
 	
 	// Project Meta Information
 	private Model model; // The trust model chosen
+	private boolean hasModel; // If this coordinator has a trust model
 	private ArrayList<Collaborator> myCollaborators = new ArrayList<Collaborator>();
 	private List<CollaboratorData> collaboratorsData; //
 	//private List<CollaboratorData> collaboratorsData; // All the collaborators AIDs
@@ -52,7 +54,11 @@ public class Coordinator extends Agent{
 	// Coordinator Behaviours
 	private CyclicBehaviour recieveMessageBehaviour, recieveTaskDoneBehaviour;
 	private WakerBehaviour startProjectBehaviour, newIterationBehaviour;
-	private OneShotBehaviour assignTaksBehaviour;
+	private OneShotBehaviour assignTaksBehaviour, createNewProjectBehaviour;
+	
+	// Test variables
+	private int numberOfProjects = 2;
+	private int projectIndex = 0;
 
 	/**
 	 * Method before the agent runs. Initializes most fields and creates 
@@ -91,12 +97,7 @@ public class Coordinator extends Agent{
 		task3.setSkillsToPerformTask(skills3);
 		tasksList.add(task3);
 		
-		List<String> skills4 = new ArrayList<String>();
-		skills4.add("skill1");
-		skills4.add("skill2");
-		Task task4 = new Task("ID3","CONTACT" , 2000);
-		task4.setSkillsToPerformTask(skills4);
-		tasksList.add(task4);
+		
 		
 		List<String> skills5 = new ArrayList<String>();
 		skills5.add("skill1");
@@ -104,10 +105,30 @@ public class Coordinator extends Agent{
 		Task task5 = new Task("ID4","CONTACT" , 2000);
 		task5.setSkillsToPerformTask(skills5);
 		tasksList.add(task5);
+		
+	
+		// Tests
+		for (int i = 0; i < 6; i++) {
+			List<String> skills = new ArrayList<String>();
+			skills.add("organize");
+			Task task = new Task("ID" + i, "ORGANIZE", 2000);
+			task.setSkillsToPerformTask(skills);
+			tasksList.add(task);
+		}
 		*/
+		// Set the trust model
+		String modelName = "FIRE";
+		hasModel = true;
+		if(modelName.equals("FIRE")) {
+			model = new FireModel();
+		} else if(modelName.equals("SINALPHA")) {
+			model = new SinalphaModel();
+		} else {
+			hasModel = false;
+		}
 		// Create Behaviours
 		createStartProjectBehaviour();
-		createAssignTaskBehaviour();
+		createAssignTaskBehaviour(); 
 		createRecieveMessageBehaviour();
 		createRecieveTaskDoneBehaviour();
 		
@@ -121,6 +142,30 @@ public class Coordinator extends Agent{
 	
 	public void addTask(Task task){
 		tasksList.add(task);
+	}
+	
+	/**
+	 * Adds behaviour that creates a whole new project. For test purposes.
+	 */
+	private void addNewProjectBehaviour() {
+		createNewProjectBehaviour = new OneShotBehaviour() {
+
+			@Override
+			public void action() {
+				// Tests
+				tasksList = new ArrayList<Task>();
+				for (int i = 0; i < 2; i++) {
+					List<String> skills = new ArrayList<String>();
+					skills.add("organize");
+					Task task = new Task("ID" + i, "ORGANIZE", 2000);
+					task.setSkillsToPerformTask(skills);
+					tasksList.add(task);
+				}
+				createStartProjectBehaviour();
+				addBehaviour(startProjectBehaviour);
+			}
+		};
+		addBehaviour(createNewProjectBehaviour);
 	}
 	
 	/**
@@ -180,23 +225,31 @@ public class Coordinator extends Agent{
 							task.done();
 							long duration = System.nanoTime() - task.getStartTime();
 							double rating = calculateRating(task.getNormalDuration(), duration/1000000l);
-							model.addInteraction(getAID(), msg.getSender(), args[2], rating);
+							if(hasModel) {
+								model.addInteraction(getAID(), msg.getSender(), args[2], rating);
+								model.print();
+							}
 							updateCollaboratorAvailability(msg.getSender(), false);
 							if(checkIfAllTasksDone()) {
 								projectDuration = System.nanoTime() - startTime;
 								System.out.println("Project finished!");
 								System.out.println("Duration: " + projectDuration/1000000000d + " seconds");
 								System.out.println("TRUST DATABASE: ");
-								model.print();
-								double trust = model.getCollaboratorTrustByTask(msg.getSender(), args[2]);
-								System.out.println("LAST AGENT TRUST VALUE: " + trust);
+								if(hasModel) {
+									model.print();
+								}
 								System.out.println();
 								projectFinished = true;
+								
+								// TESTING
+								projectIndex++;
+								if(projectIndex < numberOfProjects) {
+									addNewProjectBehaviour();
+								}
 							}
 						}
 					}
 			    	if(!assigning) {
-			    		System.out.println("NEW ITERATION!");
 			    		startNewIterationBehaviour(0l);
 			    	}
 			    } else {
@@ -228,6 +281,7 @@ public class Coordinator extends Agent{
 
 			@Override
 			protected void onWake() {
+				projectFinished = false;
 				System.out.println("Searching for collaborators...");
 				List<CollaboratorData> colaborators = getDFCollaborators();
 				for (CollaboratorData collaborator : colaborators) {
@@ -326,13 +380,29 @@ public class Coordinator extends Agent{
 				
 				// While there are tasks available in the available list select collaborator candidates
 				if(tasksListIndex < available.size()) {
+					System.out.println("NEW TASK TO BE DONE!");
 					Task selectedTask = available.get(tasksListIndex);
-					collaboratorsForTask = getCollaboratorsForTaskOrderedByTrust(selectedTask);
-					//collaboratorsForTask = available.get(tasksListIndex).getCollaborators(); // TODO remove
+					/* If the coordinator has a trust model then order collaborators by trust. If not 
+					 * get the collaborators of a task by the original ordered that they were found.
+					 */
+					if(hasModel) {
+						collaboratorsForTask = getCollaboratorsForTaskOrderedByTrust(selectedTask);
+					} else {
+						collaboratorsForTask = available.get(tasksListIndex).getCollaboratorsData();
+					}
 					if(potencialCollaboratorIndex < available.get(tasksListIndex).getCollaborators().size()) {
 						CollaboratorData collaborator = collaboratorsForTask.get(potencialCollaboratorIndex);
-						ACLMessage message = prepareRequestMessage(selectedTask);
-						sendRequestMessage(collaborator.getAID(), message, selectedTask);
+						if(!checkIfCollaboratorIsOccupied(collaborator)) {
+							ACLMessage message = prepareRequestMessage(selectedTask);
+							sendRequestMessage(collaborator.getAID(), message, selectedTask);
+						} else {
+							potencialCollaboratorIndex++;
+							if(potencialCollaboratorIndex >= collaboratorsForTask.size()) {
+								tasksListIndex++;
+								potencialCollaboratorIndex = 0;
+							}
+							addBehaviour(assignTaksBehaviour);
+						}
 					} else {
 						potencialCollaboratorIndex = 0;
 						tasksListIndex++;
@@ -351,6 +421,16 @@ public class Coordinator extends Agent{
 			}
 		};
 	}
+	
+	private boolean checkIfCollaboratorIsOccupied(CollaboratorData coll) {
+		for (int i = 0; i < collaboratorsData.size(); i++) {
+			if(collaboratorsData.get(i).getAID().equals(coll.getAID())) {
+				return collaboratorsData.get(i).isOcuppied();
+			}
+		}
+		return false;
+	}
+	
 	
 	/**
 	 * Gets a list of all collaborators of a task ordered by trust.

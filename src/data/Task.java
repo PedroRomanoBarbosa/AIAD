@@ -119,6 +119,15 @@ public class Task implements Comparable<Task>{
 		return collaborators;
 	}
 	
+	public List<CollaboratorData> getCollaboratorsData() {
+		List<CollaboratorData> collaboratorsData = new ArrayList<CollaboratorData>();
+		for (AID aid : collaborators) {
+			CollaboratorData cd = new CollaboratorData(aid);
+			collaboratorsData.add(cd);
+		}
+		return collaboratorsData;
+	}
+	
 	public void addCollaborator(AID aid) {
 		if(!collaborators.contains(aid)) {
 			collaborators.add(aid);
