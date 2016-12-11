@@ -116,7 +116,6 @@ public class MyModel extends SimModelImpl{
 	}
 
 	public void addMyCollaborators(Collaborator myCollaborator) {
-		System.out.println("AQUI "+myCollaborator.getLocalName());
 		this.myCollaboratorsAgents.add(myCollaborator);
 	}
 	
@@ -415,7 +414,7 @@ public class MyModel extends SimModelImpl{
 			col = new Collaborator();
 			col.setId(coll_id);
 			
-			System.out.println(coll_id);
+			//System.out.println(coll_id);
 			
 			// ADD SKILLS
 			col.setSkills(myCollaborators.get(coll_id));
