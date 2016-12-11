@@ -12,8 +12,6 @@ public class FireModel implements Model {
 	AID collaboratorAID;
 	private double recency_factor = 0;
 	private ArrayList<Interaction> database;
-	
-	//private List<Interaction> ratings_database;
 	private double startTime = 0;
 	
 	public FireModel() {
@@ -125,6 +123,9 @@ public class FireModel implements Model {
 		return results;
 	}
 
+	/**
+	 * Utility function to display the database entries.
+	 */
 	@Override
 	public void print() {
 		for (int i = 0; i < database.size(); i++) {
