@@ -202,4 +202,8 @@ public class Collaborator extends Agent {
 		}
 	}
 	
+	public void step(){
+		System.out.println("COLABORATOR " +getName()+ " STEP");
+	}
+	
 }

@@ -632,4 +632,8 @@ public class Coordinator extends Agent{
 		return rating;
 	}
 	
+	public void step(){
+		System.out.println("COORDINATOR STEP");
+	}
+	
 }

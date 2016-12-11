@@ -68,6 +68,7 @@ public class MyModel extends SimModelImpl{
 	private String coordinator;
 	private static Coordinator coord;
 	ArrayList<Collaborator> myCollaboratorsAgents;
+	Coordinator myCoordinatorAgent;
 	
 	private static Runtime rt;
 	private static Profile p;
@@ -79,6 +80,7 @@ public class MyModel extends SimModelImpl{
 		
 		
 		parser = new Parser();
+		myCollaboratorsAgents = new ArrayList<Collaborator>();
 	}
 	
 	@Override
@@ -112,7 +114,16 @@ public class MyModel extends SimModelImpl{
 	}
 
 	public void addMyCollaborators(Collaborator myCollaborator) {
+		System.out.println("AQUI "+myCollaborator.getLocalName());
 		this.myCollaboratorsAgents.add(myCollaborator);
+	}
+	
+	public void setMyCoordinator(Coordinator coord){
+		this.myCoordinatorAgent = coord;
+	}
+	
+	public Coordinator getMycoordinator() {
+		return this.myCoordinatorAgent;
 	}
 
 	
@@ -309,16 +320,27 @@ public class MyModel extends SimModelImpl{
 
 	
 	private void buildSchedule() {
+		
+		class SnapshotRunner extends BasicAction {
+		      public void execute() {
+		        dsurf.takeSnapshot();
+		      }
+		    };
+		
 		schedule.scheduleActionBeginning(0, new MainAction());
 		schedule.scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
 		schedule.scheduleActionAtInterval(1, plot, "step", Schedule.LAST);
+		schedule.scheduleActionAtInterval(100, new SnapshotRunner(), Schedule.LAST);
 	}
 	
 	
 	class MainAction extends BasicAction {
 
 		public void execute() {
-			
+			myCoordinatorAgent.step();
+			for (int i = 0; i < myCollaboratorsAgents.size(); i++) {
+				myCollaboratorsAgents.get(i).step();
+			}
 		}
 
 	}
@@ -392,7 +414,7 @@ public class MyModel extends SimModelImpl{
 		}
 		System.out.println("TASKS with precedencies and skills ADDED TO COORDINATOR");
 		
-		
+		setMyCoordinator(coord);
 		return 0;
 	}
 	
@@ -408,9 +430,7 @@ public class MyModel extends SimModelImpl{
 			col = new Collaborator();
 			//col.setId(coll_id);
 			
-			//System.out.println(coll_id);
-			
-			addMyCollaborators(col);		// check if needed
+			System.out.println(coll_id);
 			
 			// ADD SKILLS
 			col.setSkills(myCollaborators.get(coll_id));
@@ -427,7 +447,7 @@ public class MyModel extends SimModelImpl{
 			} 
 			System.out.println("AGENT COLLABORATOR "+coll_id+" CREATED");
 			
-			
+			addMyCollaborators(col);
 		}
 	}
 
