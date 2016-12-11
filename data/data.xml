@@ -59,7 +59,7 @@
   </collaborators>
 
   <tasks>
-    <task id='t01'>
+    <task id='t01' type='c01'>
       <skills>
         <skill name='s01' />
         <skill name='s07' />
@@ -72,7 +72,7 @@
       </tasks>
     </task>
 
-    <task id='t02'>
+    <task id='t02' type='c02'>
       <skills>
         <skill name='s02' />
         <skill name='s04' />
@@ -90,7 +90,7 @@
       </tasks>
     </task>
 
-    <task id='t03'>
+    <task id='t03' type='c03'>
       <skills>
         <skill name='s03' />
         <skill name='s06' />
@@ -103,7 +103,7 @@
       </tasks>
     </task>
 
-    <task id='t04'>
+    <task id='t04' type='c02'>
       <skills>
         <skill name='s04' />
         <skill name='s08' />
@@ -115,7 +115,7 @@
       </tasks>
     </task>
 
-    <task id='t05'>
+    <task id='t05' type='c05'>
       <skills>
         <skill name='s05' />
         <skill name='s10' />
@@ -126,7 +126,7 @@
       </tasks>
     </task>
 
-    <task id='t06'>
+    <task id='t06' type='c03'>
       <skills>
         <skill name='s06' />
         <skill name='s12' />
@@ -136,7 +136,7 @@
       </tasks>
     </task>
 
-    <task id='t07'>
+    <task id='t07' type='c01'>
       <skills>
         <skill name='s07' />
         <skill name='s14' />
@@ -145,7 +145,7 @@
       </tasks>
     </task>
 
-    <task id='t09'>
+    <task id='t09' type='c01'>
       <skills>
         <skill name='s09' />
         <skill name='s18' />
@@ -154,7 +154,7 @@
       </tasks>
     </task>
 
-    <task id='t10'>
+    <task id='t10' type='c02'>
       <skills>
         <skill name='s10' />
         <skill name='s20' />

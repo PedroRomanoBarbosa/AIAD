@@ -38,6 +38,7 @@ import uchicago.src.sim.engine.BasicAction;
 import uchicago.src.sim.engine.Controller;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
+import uchicago.src.sim.engine.SimModelImpl;
 import uchicago.src.sim.engine.SimpleModel;
 import uchicago.src.sim.gui.CircularGraphLayout;
 import uchicago.src.sim.gui.DisplaySurface;
@@ -47,25 +48,24 @@ import uchicago.src.sim.gui.OvalNetworkItem;
 import uchicago.src.sim.network.*;
 import uchicago.src.sim.util.SimUtilities;
 
-public class MyModel extends SimpleModel{
+public class MyModel extends SimModelImpl{
 	
 	public static final int TIT_FOR_TAT = 0; 
 	public static final int ALWAYS_DEFECT = 1; 
-	private int p1Strategy = TIT_FOR_TAT; 
-	private int p2Strategy = ALWAYS_DEFECT;
+	//private int p1Strategy = TIT_FOR_TAT; 
+	//private int p2Strategy = ALWAYS_DEFECT;
 	
 	private DisplaySurface dsurf;
 	private OpenSequenceGraph plot;
 	private int xSize, ySize;
 	private ArrayList<DefaultDrawableNode> agentList;
+	private Schedule schedule;
 	
 	private static Parser parser;
-	private File ficheiro;
 	private int numAgents, numAgentsCoord, numAgentsCol;
 	private HashMap<String,HashMap<String,Float>> myCollaborators;
 	private String coordinator;
 	private static Coordinator coord;
-	private ArrayList<Collaborator> colls;
 	
 	private static Runtime rt;
 	private static Profile p;
@@ -79,6 +79,12 @@ public class MyModel extends SimpleModel{
 		parser = new Parser();
 	}
 	
+	@Override
+	public Schedule getSchedule() {
+		// TODO Auto-generated method stub
+		return schedule;
+	}
+	
 	public String getName() {
 		return "Testing Model";
 	}
@@ -86,11 +92,11 @@ public class MyModel extends SimpleModel{
 	public String[] getInitParam() {
 		return new String[] { "numberOfAgents", "spaceSize", "movingMode"};
 	}
-
+/*
 	public Schedule getSchedule() {
 		return schedule;
 	}
-
+*/
 	public int getNumberOfAgents() {
 		return numAgents;
 	}
@@ -102,7 +108,7 @@ public class MyModel extends SimpleModel{
 	
 	public void setup(){
 		
-		super.setup();
+//		super.setup();
 		
 		schedule = new Schedule();
 		if (dsurf != null) dsurf.dispose();
@@ -291,13 +297,13 @@ public class MyModel extends SimpleModel{
 	
 
 
-	/*
+	
 	private void buildSchedule() {
 		schedule.scheduleActionBeginning(0, new MainAction());
 		schedule.scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
 		schedule.scheduleActionAtInterval(1, plot, "step", Schedule.LAST);
 	}
-	*/
+	
 	
 	class MainAction extends BasicAction {
 
@@ -371,7 +377,7 @@ public class MyModel extends SimpleModel{
 	public static void initCollaborators(){
 		Collaborator col;
 		AgentController collaboratorAgent;
-		ArrayList<String> collaborators = parser.getProjectCollaborators();
+//		ArrayList<String> collaborators = parser.getProjectCollaborators();
 		HashMap<String,HashMap<String,Float>> myCollaborators;
 		
 		
@@ -402,4 +408,6 @@ public class MyModel extends SimpleModel{
 			
 		}
 	}
+
+	
 }
