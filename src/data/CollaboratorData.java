@@ -7,6 +7,9 @@ import java.util.HashMap;
 
 import jade.core.AID;
 
+/**
+ * This class serves as a data structure that represents the collaborator agent.
+ */
 public class CollaboratorData implements Comparable<CollaboratorData> {
 	private AID aid;
 	private boolean occupied;
@@ -48,6 +51,11 @@ public class CollaboratorData implements Comparable<CollaboratorData> {
 		this.skills.put(skillId, performance);
 	}
 	
+	/**
+	 * Checks whether this collaborator can perform a given task.
+	 * @param t The task to test.
+	 * @return Whether it can do it or not.
+	 */
 	public boolean canExecuteTask(Task t) {
 		for (int i = 0; i < t.getSkillsToPerformTask().size(); i++) {
 			String skill = t.getSkillsToPerformTask().get(i);

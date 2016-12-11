@@ -52,6 +52,10 @@ public class Collaborator extends Agent {
 		this.skills = skills;
 	}
 
+	/**
+	 * Method before the agent runs. Initializes most fields and creates 
+	 * all the behaviours needed and launches the startup ones.
+	 */
 	@Override
 	protected void setup() {
 		skills = new HashMap<String, Float>();
