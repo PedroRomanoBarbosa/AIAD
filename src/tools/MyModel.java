@@ -340,8 +340,8 @@ public class MyModel extends SimModelImpl{
 	}
 	
 	public void initAgents() {
-		initCoordinator();
 		initCollaborators();
+		initCoordinator();
 	}
 	
 	public int initCoordinator(){
@@ -405,6 +405,7 @@ public class MyModel extends SimModelImpl{
 			coord.addTask(myTask);
 		}
 		System.out.println("TASKS with precedencies and skills ADDED TO COORDINATOR");
+		System.out.println(coord.getTasksList());
 		coord.setId(parser.getCoordinator());
 		addMyCoordinator(coord);
 		return 0;
@@ -503,11 +504,11 @@ public class MyModel extends SimModelImpl{
 					if (col.getId().equals(agentList.get(i).getNodeLabel())) {
 						if (col.isOcuppied()) {
 							agentList.get(i).setColor(Color.red);
-							//System.out.println("--> "+col.getId()+" está OCUPADO");
+							//System.out.println("--> "+col.getId()+" estï¿½ OCUPADO");
 						}
 						else{
 							agentList.get(i).setColor(Color.green);
-							//System.out.println("--> "+col.getId()+" está LIVRE");
+							//System.out.println("--> "+col.getId()+" estï¿½ LIVRE");
 						}
 					}
 				}
