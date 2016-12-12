@@ -10,8 +10,6 @@
       <task id="T2"/>
       <task id="T3"/>
       <task id="T4"/>
-      <task id="T5"/>
-      <task id="T6"/>
     </tasks>
   </project>
 
@@ -60,22 +58,6 @@
     </task>
 
     <task id='T4' type='ORGANIZE' time='2000'>
-      <skills>
-        <skill name='ORGANIZE' />
-      </skills>
-      <tasks>
-      </tasks>
-    </task>
-
-    <task id='T5' type='ORGANIZE' time='2000'>
-      <skills>
-        <skill name='ORGANIZE' />
-      </skills>
-      <tasks>
-      </tasks>
-    </task>
-
-    <task id='T6' type='ORGANIZE' time='2000'>
       <skills>
         <skill name='ORGANIZE' />
       </skills>

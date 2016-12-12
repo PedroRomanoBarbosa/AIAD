@@ -65,14 +65,23 @@ public class Coordinator extends Agent {
 	private String coord_id;
 	private int tasksDone = 0;
 	
-	public void setId(String id){
+	public Coordinator() {
+		tasksList = new ArrayList<Task>();
+	}
+	
+	public List<Task> getTasksList() {
+		return tasksList;
+	}
+	
+	public void setId(String id) {
 		coord_id = id;
 	}
-	public String getId(){
+	
+	public String getId() {
 		return coord_id;
 	}
 	
-	public int getDoneTasks(){
+	public int getDoneTasks() {
 		return tasksList.size()-tasksDone;
 	}
 	
@@ -86,7 +95,6 @@ public class Coordinator extends Agent {
 	 */
 	@Override
 	protected void setup() {
-		tasksList = new ArrayList<Task>();
 		collaboratorsData = new ArrayList<CollaboratorData>();
 		projectFinished = false;
 		model = new FireModel();
@@ -136,18 +144,6 @@ public class Coordinator extends Agent {
 			tasksList.add(task);
 		}
 		*/
-		// Set the trust model
-		/*
-		String modelName = "FIRE";
-		hasModel = true;
-		if(modelName.equals("FIRE")) {
-			model = new FireModel();
-		} else if(modelName.equals("SINALPHA")) {
-			model = new SinalphaModel();
-		} else {
-			hasModel = false;
-		}
-		*/
 		
 		// Set the trust model
 		hasModel = true;
@@ -194,16 +190,27 @@ public class Coordinator extends Agent {
 				tasksList = new ArrayList<Task>();
 				for (int i = 0; i < 2; i++) {
 					List<String> skills = new ArrayList<String>();
-					skills.add("organize");
+					skills.add("ORGANIZE");
 					Task task = new Task("ID" + i, "ORGANIZE", 2000);
 					task.setSkillsToPerformTask(skills);
 					tasksList.add(task);
 				}
+				updateContactList();
 				createStartProjectBehaviour();
 				addBehaviour(startProjectBehaviour);
 			}
 		};
 		addBehaviour(createNewProjectBehaviour);
+	}
+	
+	private void updateContactList() {
+		for (CollaboratorData collaborator : collaboratorsData) {
+			for (Task t : tasksList) {
+				if(collaborator.canExecuteTask(t)) {
+					t.addCollaborator(collaborator.getAID());
+				}
+			}
+		}
 	}
 	
 	/**
@@ -268,6 +275,8 @@ public class Coordinator extends Agent {
 								model.addInteraction(getAID(), msg.getSender(), args[2], rating);
 							}
 							updateCollaboratorAvailability(msg.getSender(), false);
+							
+							// Check if this was the last task to be done
 							if(checkIfAllTasksDone()) {
 								projectDuration = System.nanoTime() - startTime;
 								System.out.println("PROJECT HAS ENDED!");
@@ -284,12 +293,13 @@ public class Coordinator extends Agent {
 								if(projectIndex < numberOfProjects) {
 									addNewProjectBehaviour();
 								}
+							} else {
+								if(!assigning) {
+						    		startNewIterationBehaviour(0l);
+						    	}
 							}
 						}
 					}
-			    	if(!assigning) {
-			    		startNewIterationBehaviour(0l);
-			    	}
 			    } else {
 			    	block();
 			    }
@@ -320,11 +330,8 @@ public class Coordinator extends Agent {
 			@Override
 			protected void onWake() {
 				projectFinished = false;
-				System.out.println("Searching for collaborators...");
-				List<CollaboratorData> colaborators = getDFCollaborators();
-				for (CollaboratorData collaborator : colaborators) {
-					addToContactList(collaborator);
-				}
+				System.out.println("SEARCHING FOR COLLABORATORS...");
+				getDFCollaborators();
 				printContactsList();
 				subscribe();
 				System.out.println("PROJECT STARTED!\n");
@@ -356,13 +363,17 @@ public class Coordinator extends Agent {
 	 * @param collaborator The collaborator data.
 	 */
 	private void addToContactList(CollaboratorData collaborator) {
-		for (Task t : tasksList) {
-			if(collaborator.canExecuteTask(t)) {
-				t.addCollaborator(collaborator.getAID());
-				if(!collaboratorsData.contains(collaborator)) {
-					collaboratorsData.add(collaborator);
+		boolean canDoATask = false;
+		if(!collaboratorsData.contains(collaborator)) {
+			for (Task t : tasksList) {
+				if(collaborator.canExecuteTask(t)) {
+					canDoATask = true;
+					t.addCollaborator(collaborator.getAID());
 				}
 			}
+		}
+		if(canDoATask) {
+			collaboratorsData.add(collaborator);
 		}
 	}
 	
@@ -493,6 +504,7 @@ public class Coordinator extends Agent {
 		List<Task> availableTasks = new ArrayList<Task>();
 		for (Task task : tasksList) {
 			if(!task.isDone() && !task.isAssigned() && !hasPrecedentsLeft(task) && hasCollaborators(task)) {
+				System.out.println("NEW AVAILABLE TASK");
 				availableTasks.add(task);
 			}
 		}
@@ -551,6 +563,7 @@ public class Coordinator extends Agent {
 			protected void handleInform(ACLMessage inform) {
 				String[] args = inform.getContent().split(" ");
 				if(args[0].equals("ASSIGNED") && args[1].equals(task.getTaskId())) {
+					updateCollaboratorAvailability(inform.getSender(), true);
 					task.assign();
 					task.setStartTime(System.nanoTime());
 					tasksListIndex++;
@@ -636,8 +649,7 @@ public class Coordinator extends Agent {
 	 * Searches for all the collaborators in the network.
 	 * @return list of all the collaborators.
 	 */
-	private List<CollaboratorData> getDFCollaborators() {
-	  	List<CollaboratorData> collaborators = new ArrayList<CollaboratorData>();
+	private void getDFCollaborators() {
 	  	try {
 	  		DFAgentDescription template = new DFAgentDescription();
 	  		ServiceDescription templateSd = new ServiceDescription();
@@ -660,6 +672,7 @@ public class Coordinator extends Agent {
   							Float value = Float.parseFloat((String)p.getValue());
   							cd.addSkill(p.getName(), value);
   						}
+  						addToContactList(cd);
   					}
   				}
   			}
@@ -667,7 +680,6 @@ public class Coordinator extends Agent {
 	  	catch (FIPAException fe) {
 	  		fe.printStackTrace();
 	  	}
-	  	return collaborators;
 	}
 	
 	/**

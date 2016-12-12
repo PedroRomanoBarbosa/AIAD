@@ -104,6 +104,8 @@ public class CollaboratorData implements Comparable<CollaboratorData> {
 	public boolean equals(Object obj) {
 		return aid.equals(((CollaboratorData)obj).getAID());
 	}
+	
+	
 
 	@Override
 	public int compareTo(CollaboratorData cd) {
