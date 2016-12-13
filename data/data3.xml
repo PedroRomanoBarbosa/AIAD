@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <scenario>
-  <project id='p01' model='FIRE'>
+  <project id='p01' model='SINALPHA'>
     <intervenients>
       <coordinator id='coord01' />
     </intervenients>
